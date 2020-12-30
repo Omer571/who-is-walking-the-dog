@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>780292948851-0hc25q92dodshu7q0di3al2f5ekkgbo0.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.780292948851-0hc25q92dodshu7q0di3al2f5ekkgbo0</string>
+	<key>API_KEY</key>
+	<string>AIzaSyDYACU-wX_Q2ts3UXxcovIcYVt-G_CMfpo</string>
+	<key>GCM_SENDER_ID</key>
+	<string>780292948851</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.who-is-walking-the-dog</string>
+	<key>PROJECT_ID</key>
+	<string>who-is-walking-the-dog</string>
+	<key>STORAGE_BUCKET</key>
+	<string>who-is-walking-the-dog.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:780292948851:ios:0e6e43b8554a7835fc3b06</string>
+	<key>DATABASE_URL</key>
+	<string>https://who-is-walking-the-dog.firebaseio.com</string>
+</dict>
+</plist>

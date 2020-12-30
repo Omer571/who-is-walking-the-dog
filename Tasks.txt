@@ -1,0 +1,41 @@
+Give login functionality
+Make Loading Screen
+
+Current Task(s):
+
+  Implement time picker (link it) and time hook
+
+  Dog Weekly activity Needs has to be apart of dog object
+  Enforce number of days taken (have the Weekly Needs section updated and throw alerts when needs already met)
+
+  When Adding dog member, implement phone number reader and make surer (implement w/ twilio)
+  Give functionality to "REQUEST SCHEDULE CHANGE W/ OMER" (sends text)
+
+  Allow to delete people from dog (or duplicate of yourself)/edit dog
+  Make cards bigger or get names to fit better (Ginger Q..)
+
+  Figure out if we want user to schedule anybody, just themselves, or anybody with conditions
+  (message or notification sent) --> SOLUTION: ANYBODY FOR NOW
+
+  May know way to have refresh work, have a state for refresh in both background and main component,
+  main passes to background (OR USE: https://dev.to/muhammadawaisshaikh/how-to-get-an-updated-state-of-child-component-in-the-parent-component-using-the-callback-method-1i5)
+
+Current Problem(s):
+  Currently, SingleDogDashboard Reserving days works perfectly as expected
+    HOWEVER, dogHook is still being updated before setDogHook is called, even though we know it is only connected to shallow copies
+
+  react-native time picker will only install up to 3.0.0 on expo, but we need 3.0.1 to resolve current bug
+  solution is to get different package now :( or try upgrading expo (commit changes first)
+
+Future Tasks:
+  How to use app instructions
+  Need to Clean up dashboard (very messy)
+  Allow Dogs needs to be changable
+  made defaultDogObject.tsx, import it in needed files (ex) AddDogForm (may not need to any more: const user: User = {} as any)
+  Switch alerts to react native paper dialog
+  just pass dog object to card and extract info in card component (remove duplicate code with dog and dogName (several places))
+  Add constants
+  Add function to make array for keys of member memberInputs
+  check to make sure proper number of member Inputs not succeeded with keys
+  When fetching members, make sure the names don't go outside of cards (vertically and horizontally)
+  put types in types.tsx and use imports
