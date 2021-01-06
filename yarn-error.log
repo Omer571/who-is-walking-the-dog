@@ -1,5 +1,5 @@
 Arguments: 
-  /usr/local/bin/node /usr/local/Cellar/yarn/1.22.10/libexec/bin/yarn.js add @types/rn-material-dropdown
+  /usr/local/bin/node /usr/local/Cellar/yarn/1.22.10/libexec/bin/yarn.js add expo@^40.0.0
 
 PATH: 
   /anaconda3/condabin:/usr/local/sbin:/Library/Frameworks/Python.framework/Versions/3.7/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/share/dotnet:~/.dotnet/tools:/Library/Frameworks/Mono.framework/Versions/Current/Commands:/usr/local/mysql/bin
@@ -14,17 +14,15 @@ Platform:
   darwin x64
 
 Trace: 
-  Error: https://registry.yarnpkg.com/@types%2frn-material-dropdown: Not found
-      at Request.params.callback [as _callback] (/usr/local/Cellar/yarn/1.22.10/libexec/lib/cli.js:66988:18)
-      at Request.self.callback (/usr/local/Cellar/yarn/1.22.10/libexec/lib/cli.js:140749:22)
-      at Request.emit (events.js:210:5)
-      at Request.<anonymous> (/usr/local/Cellar/yarn/1.22.10/libexec/lib/cli.js:141721:10)
-      at Request.emit (events.js:210:5)
-      at IncomingMessage.<anonymous> (/usr/local/Cellar/yarn/1.22.10/libexec/lib/cli.js:141643:12)
-      at Object.onceWrapper (events.js:299:28)
-      at IncomingMessage.emit (events.js:215:7)
-      at endReadableNT (_stream_readable.js:1183:12)
-      at processTicksAndRejections (internal/process/task_queues.js:80:21)
+  Error: connect EPERM 104.16.26.35:443 - Local (0.0.0.0:0)
+      at internalConnect (net.js:907:16)
+      at defaultTriggerAsyncIdScope (internal/async_hooks.js:301:12)
+      at emitLookup (net.js:1050:9)
+      at /usr/local/Cellar/yarn/1.22.10/libexec/lib/cli.js:107543:29
+      at /usr/local/Cellar/yarn/1.22.10/libexec/lib/cli.js:107389:25
+      at RawTask.module.exports.RawTask.call (/usr/local/Cellar/yarn/1.22.10/libexec/lib/cli.js:83614:19)
+      at flush (/usr/local/Cellar/yarn/1.22.10/libexec/lib/cli.js:83696:29)
+      at processTicksAndRejections (internal/process/task_queues.js:75:11)
 
 npm manifest: 
   {
@@ -40,6 +38,7 @@ npm manifest:
       "@react-native-community/masked-view": "0.1.10",
       "@react-navigation/native": "^5.8.2",
       "@react-navigation/stack": "^5.11.1",
+      "@types/react-native-modal-dropdown": "^0.7.0",
       "base-64": "^1.0.0",
       "expo": "~39.0.2",
       "expo-status-bar": "~1.0.2",
@@ -49,6 +48,7 @@ npm manifest:
       "react": "16.13.1",
       "react-dom": "16.13.1",
       "react-native": "https://github.com/expo/react-native/archive/sdk-39.0.4.tar.gz",
+      "react-native-dropdown-picker": "^3.7.1",
       "react-native-gesture-handler": "~1.7.0",
       "react-native-paper": "^4.3.0",
       "react-native-reanimated": "~1.13.0",
@@ -56,8 +56,7 @@ npm manifest:
       "react-native-screens": "~2.10.1",
       "react-native-status-bar-height": "^2.5.0",
       "react-native-vector-icons": "^7.1.0",
-      "react-native-web": "~0.13.12",
-      "rn-material-dropdown": "^0.11.3"
+      "react-native-web": "~0.13.12"
     },
     "devDependencies": {
       "@babel/core": "~7.9.0",
@@ -66,7 +65,8 @@ npm manifest:
       "@types/react-native": "~0.63.2",
       "typescript": "~3.9.5"
     },
-    "private": true
+    "private": true,
+    "version": "0.0.0"
   }
 
 yarn manifest: 
@@ -1718,6 +1718,21 @@ Lockfile:
     version "16.9.9"
     resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-16.9.9.tgz#d2d0a6f720a0206369ccbefff752ba37b9583136"
     integrity sha512-jE16FNWO3Logq/Lf+yvEAjKzhpST/Eac8EMd1i4dgZdMczfgqC8EjpxwNgEe3SExHYLliabXDh9DEhhqnlXJhg==
+    dependencies:
+      "@types/react" "*"
+  
+  "@types/react-native-modal-dropdown@^0.7.0":
+    version "0.7.0"
+    resolved "https://registry.yarnpkg.com/@types/react-native-modal-dropdown/-/react-native-modal-dropdown-0.7.0.tgz#5c0d38ec5ae173f9c7f281c336f1ec1ba6d917d6"
+    integrity sha512-+6rL765aF4ETSS0+vc92wbgNPm5mhXqgslta2dhlc5aBS+sA+Bvdd25/L2zhTTqiVktPQis2cOjwPuhm8WEIZw==
+    dependencies:
+      "@types/react" "*"
+      "@types/react-native" "*"
+  
+  "@types/react-native@*":
+    version "0.63.36"
+    resolved "https://registry.yarnpkg.com/@types/react-native/-/react-native-0.63.36.tgz#649ca8fd2b0cda9e41b961e7501e33b71246e88d"
+    integrity sha512-mCWEiPgi55MkXXMuDe0VsOWO3C4hhj6mO/jnTvy0sXcRD6MbAmGwXnVe5+m1FRCuEQMaJwgG1ZNahZvvyvuGUA==
     dependencies:
       "@types/react" "*"
   
@@ -5367,7 +5382,7 @@ Lockfile:
     dependencies:
       asap "~2.0.6"
   
-  prop-types@^15.5.10, prop-types@^15.5.9, prop-types@^15.6.0, prop-types@^15.6.2, prop-types@^15.7.2:
+  prop-types@^15.6.0, prop-types@^15.6.2, prop-types@^15.7.2:
     version "15.7.2"
     resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.7.2.tgz#52c41e75b8c87e72b9d9360e0206b99dcbffa6c5"
     integrity sha512-8QQikdH7//R2vurIJSutZ1smHYTcLpRWEOlHnzcWHmBYrOGUysKwSsrC89BCiFj3CbrfJ/nXFdJepOVrY1GCHQ==
@@ -5480,6 +5495,13 @@ Lockfile:
     resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.13.1.tgz#789729a4dc36de2999dc156dd6c1d9c18cea56a4"
     integrity sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==
   
+  react-native-dropdown-picker@^3.7.1:
+    version "3.7.1"
+    resolved "https://registry.yarnpkg.com/react-native-dropdown-picker/-/react-native-dropdown-picker-3.7.1.tgz#ead80b69108bfe8cf56fef5a68d5545d5063b33c"
+    integrity sha512-YyT4q+CgMw299ypSlvSOt/tZiYD0bsTmnNKazLwpYM3ouGaj34NTDS+MHVyiYpyZbn4XSs+FHRcs12PupWS7Cg==
+    dependencies:
+      react-native-vector-icons "^7.0.0"
+  
   react-native-gesture-handler@~1.7.0:
     version "1.7.0"
     resolved "https://registry.yarnpkg.com/react-native-gesture-handler/-/react-native-gesture-handler-1.7.0.tgz#0ef74a5ba836832e497dc49eb1ce58baa6c617e5"
@@ -5494,35 +5516,6 @@ Lockfile:
     version "1.3.0"
     resolved "https://registry.yarnpkg.com/react-native-iphone-x-helper/-/react-native-iphone-x-helper-1.3.0.tgz#84fd13e6b89cc3aa4daa80ec514bf15cb724d86d"
     integrity sha512-+/bcZWFeZt0xSS/+3CHM5K7qPL4vDO/3ARLIowzFpUPGZiPsv9+NET+XNqqseRYwFJwYMmtX+Q4TZKxAVy09ew==
-  
-  react-native-material-buttons@^0.5.0:
-    version "0.5.0"
-    resolved "https://registry.yarnpkg.com/react-native-material-buttons/-/react-native-material-buttons-0.5.0.tgz#ab2b3e3fc3f500ca713f51e9d75978aff602152a"
-    integrity sha1-qys+P8P1AMpxP1Hp11l4r/YCFSo=
-    dependencies:
-      prop-types "^15.5.9"
-      react-native-material-ripple "^0.7.0"
-  
-  react-native-material-ripple@^0.7.0:
-    version "0.7.5"
-    resolved "https://registry.yarnpkg.com/react-native-material-ripple/-/react-native-material-ripple-0.7.5.tgz#e2af5110680532f14aea3c3a438247be2ffef659"
-    integrity sha1-4q9REGgFMvFK6jw6Q4JHvi/+9lk=
-    dependencies:
-      prop-types "^15.5.10"
-  
-  react-native-material-ripple@^0.8.0:
-    version "0.8.0"
-    resolved "https://registry.yarnpkg.com/react-native-material-ripple/-/react-native-material-ripple-0.8.0.tgz#b8c24e6fdea2af2a21e8468b1f40b35483019e2f"
-    integrity sha1-uMJOb96iryoh6EaLH0CzVIMBni8=
-    dependencies:
-      prop-types "^15.5.10"
-  
-  react-native-material-textfield@^0.12.0:
-    version "0.12.0"
-    resolved "https://registry.yarnpkg.com/react-native-material-textfield/-/react-native-material-textfield-0.12.0.tgz#3fba19d76ab89f67052c81e082152fc243d82a3f"
-    integrity sha1-P7oZ12q4n2cFLIHgghUvwkPYKj8=
-    dependencies:
-      prop-types "^15.5.9"
   
   react-native-paper@^4.3.0:
     version "4.3.0"
@@ -5562,7 +5555,7 @@ Lockfile:
     resolved "https://registry.yarnpkg.com/react-native-status-bar-height/-/react-native-status-bar-height-2.5.0.tgz#bc0fb85230603850aab9667ee8111a62954de90c"
     integrity sha512-sYBCPYA/NapBSHkdm/IVL4ID3LLlIuLqINi2FBDyMkc2BU9pfSGOtkz9yfxoK39mYJuTrlTOQ7mManARUsYDSA==
   
-  react-native-vector-icons@^7.1.0:
+  react-native-vector-icons@^7.0.0, react-native-vector-icons@^7.1.0:
     version "7.1.0"
     resolved "https://registry.yarnpkg.com/react-native-vector-icons/-/react-native-vector-icons-7.1.0.tgz#145487d617b2a81d395d2cf64e6e065fcab3a454"
     integrity sha512-V2a1zJ4i+kS8O4j183gIwX14St9AxxXabxwYpFBgRhvr2NDXyFcjHDEAgrOYYlt2W57e20aN1tBDU/I+wn9WtQ==
@@ -5796,16 +5789,6 @@ Lockfile:
     version "2.2.8"
     resolved "https://registry.yarnpkg.com/rimraf/-/rimraf-2.2.8.tgz#e439be2aaee327321952730f99a8929e4fc50582"
     integrity sha1-5Dm+Kq7jJzIZUnMPmaiSnk/FBYI=
-  
-  rn-material-dropdown@^0.11.3:
-    version "0.11.3"
-    resolved "https://registry.yarnpkg.com/rn-material-dropdown/-/rn-material-dropdown-0.11.3.tgz#135ab97293d8065f43b69f0b7162d5d05e966cee"
-    integrity sha512-U8Q55AwFEFFTV74hvEG/6eAmGxtvibuqzQeYobUL6MQDuX4qByEabNE4GX7T60qgCFHsflCqekDD5uTjCsDQkg==
-    dependencies:
-      prop-types "^15.5.9"
-      react-native-material-buttons "^0.5.0"
-      react-native-material-ripple "^0.8.0"
-      react-native-material-textfield "^0.12.0"
   
   rsvp@^4.8.4:
     version "4.8.5"

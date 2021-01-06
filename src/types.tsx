@@ -22,13 +22,6 @@ export type DogFamilyMember = {
   name: string,
 }
 
-
-export type TypeDay = {
-  walkDay: boolean,
-  restDay: boolean,
-  parkDay: boolean,
-}
-
 export type DayInfo = {
   walkerName: string,
   time: string,
@@ -45,6 +38,12 @@ export type DogSchedule = {
   sunday: DayInfo,
 }
 
+export type WeeklyNeeds = {
+  walks: number,
+  outings: number,
+  rest: number,
+}
+
 export type DogObject = {
   firstName: string,
   middleName: string,
@@ -52,4 +51,5 @@ export type DogObject = {
   members: Array<DogFamilyMember>,
   schedule: DogSchedule,
   key: string,
+  weeklyNeeds: WeeklyNeeds,
 }

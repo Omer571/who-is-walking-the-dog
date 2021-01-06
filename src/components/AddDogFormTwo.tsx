@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, TextInput, View, Keyboard } from 'react-native';
 import Button from './Button';
 import { firebase } from '../firebase/config';
-import { DogFamilyMember, TypeDay, DogSchedule, DogObject, Route } from '../types';
+import { DogFamilyMember, DogSchedule, DogObject, Route } from '../types';
 import { useNavigation } from '@react-navigation/native';
 
 // const defaultDay: TypeDay = {
@@ -11,40 +11,44 @@ import { useNavigation } from '@react-navigation/native';
 //   parkDay: false,
 // }
 
+const WALKING_DAYS_PER_WEEK = 4
+const OUTING_DAYS_PER_WEEK = 2
+const REST_DAYS_PER_WEEK = 1
+
 const defaultDogSchedule: DogSchedule = {
   monday: {
     walkerName: "",
-    time: "",
+    time: "06:15:00 PM",
     dayType: "",
   },
   tuesday: {
     walkerName: "",
-    time: "",
+    time: "06:15:00 PM",
     dayType: "",
   },
   wednesday: {
     walkerName: "",
-    time: "",
+    time: "06:15:00 PM",
     dayType: "",
   },
   thursday: {
     walkerName: "",
-    time: "",
+    time: "06:15:00 PM",
     dayType: "",
   },
   friday: {
     walkerName: "",
-    time: "",
+    time: "06:15:00 PM",
     dayType: "",
   },
   saturday: {
     walkerName: "",
-    time: "",
+    time: "06:15:00 PM",
     dayType: "",
   },
   sunday: {
     walkerName: "",
-    time: "",
+    time: "06:15:00 PM",
     dayType: "",
   },
 }
@@ -90,17 +94,12 @@ const AddDogFormTwo = (props: Props ) => {
           style={styles.familyMemberInput}
           placeholder="Family Member Name"
           onChangeText={(newFamilyMemberName) => setDogData(prevDogData => {
-
+            // Needs to be separate function
             const thisMemberIndex = prevDogData.members.findIndex((member: DogFamilyMember) => member.dataKey === dataKey);
             prevDogData.members[thisMemberIndex].name = newFamilyMemberName;
-
             return {
-              firstName: prevDogData.firstName,
-              middleName: prevDogData.middleName,
-              lastName: prevDogData.lastName,
-              members: prevDogData.members,
+              ...prevDogData,
               schedule: defaultDogSchedule,
-              key: prevDogData.key,
             }
           })}
         />
@@ -108,17 +107,13 @@ const AddDogFormTwo = (props: Props ) => {
           style={styles.familyMemberInput}
           placeholder="2817366840"
           onChangeText={(newFamilyMemberNumber) => setDogData(prevDogData => {
-
+            // Needs to be separate function?
             const thisMemberIndex = prevDogData.members.findIndex((member: DogFamilyMember) => member.dataKey === dataKey);
             prevDogData.members[thisMemberIndex].phoneNumber = newFamilyMemberNumber;
 
             return {
-              firstName: prevDogData.firstName,
-              middleName: prevDogData.middleName,
-              lastName: prevDogData.lastName,
-              members: prevDogData.members,
+              ...prevDogData,
               schedule: defaultDogSchedule,
-              key: prevDogData.key,
             }
           })}
         />
@@ -133,6 +128,11 @@ const AddDogFormTwo = (props: Props ) => {
     members: [{dataKey: '0', phoneNumber: "", name: user.name}], // need user object to have phoneNumber later (or not? user doesn't need to send phone number to self)
     schedule: defaultDogSchedule,
     key: '',
+    weeklyNeeds: {
+      walks: WALKING_DAYS_PER_WEEK,
+      outings: OUTING_DAYS_PER_WEEK,
+      rest: REST_DAYS_PER_WEEK,
+    }
   }
 
   const [dogData, setDogData] = useState<DogObject>(initialDogObject)
@@ -151,12 +151,8 @@ const AddDogFormTwo = (props: Props ) => {
       const newMember: DogFamilyMember = {dataKey: key.toString(), phoneNumber: "", name: ""}
       prevDogData.members.push(newMember)
       return {
-        firstName: prevDogData.firstName,
-        middleName: prevDogData.middleName,
-        lastName: prevDogData.lastName,
-        members: prevDogData.members,
+        ...prevDogData,
         schedule: defaultDogSchedule,
-        key: prevDogData.key,
       }
     })
   };
@@ -182,12 +178,9 @@ const AddDogFormTwo = (props: Props ) => {
         placeholder='Doggy First Name'
         onChangeText={(newFirstName) => setDogData(prevDogData => {
           return {
+            ...prevDogData,
             firstName: newFirstName,
-            middleName: prevDogData.middleName,
-            lastName: prevDogData.lastName,
-            members: prevDogData.members,
             schedule: defaultDogSchedule,
-            key: prevDogData.key,
           }
         })}
       />
@@ -196,12 +189,9 @@ const AddDogFormTwo = (props: Props ) => {
         placeholder='Doggy Middle Name'
         onChangeText={(newMiddleName) => setDogData(prevDogData => {
           return {
-            firstName: prevDogData.firstName,
+            ...prevDogData,
             middleName: newMiddleName,
-            lastName: prevDogData.lastName,
-            members: prevDogData.members,
             schedule: defaultDogSchedule,
-            key: prevDogData.key,
           }
         })}
       />
@@ -210,12 +200,9 @@ const AddDogFormTwo = (props: Props ) => {
         placeholder='Doggy Last Name'
         onChangeText={(newLastName) => setDogData(prevDogData => {
           return {
-            firstName: prevDogData.firstName,
-            middleName: prevDogData.middleName,
+            ...prevDogData,
             lastName: newLastName,
-            members: prevDogData.members,
             schedule: defaultDogSchedule,
-            key: prevDogData.key,
           }
         })}
       />

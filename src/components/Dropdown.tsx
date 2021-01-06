@@ -28,7 +28,7 @@ const Dropdown = ({ options, defaultOption, priority, onChange }: Props) => {
   }
 
   const handleChange = (dropdownOption: item) => {
-    onChange(dropdownOption.value);
+    onChange(dropdownOption.value)
   }
 
   // Debug help

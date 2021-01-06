@@ -1,19 +1,19 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useState, useEffect } from 'react'
 import {
   ImageBackground,
   RefreshControl,
   KeyboardAvoidingView,
   ScrollView,
-} from 'react-native';
-import { Text, View, StyleSheet } from 'react-native';
-// import DashboardBackground from '../components/DashboardBackground';
-import SmallLogo from '../components/SmallLogo';
-import UnderlinedHeader from '../components/UnderlinedHeader';
-import Button from '../components/Button';
-import DogCard from '../components/DogCard';
-import { useNavigation } from '@react-navigation/native';
-import { Route, DogObject, UserData, DogSchedule } from '../types';
-import emptyDogObject from '../emptyDogObject';
+} from 'react-native'
+import { Text, View, StyleSheet } from 'react-native'
+// import DashboardBackground from '../components/DashboardBackground'
+import SmallLogo from '../components/SmallLogo'
+import UnderlinedHeader from '../components/UnderlinedHeader'
+import Button from '../components/Button'
+import DogCard from '../components/DogCard'
+import { useNavigation } from '@react-navigation/native'
+import { Route, DogObject, UserData } from '../types'
+import emptyDogObject from '../emptyDogObject'
 import { firebase } from '../firebase/config'
 
 const MAX_CARDS = 10;
@@ -57,21 +57,24 @@ const Dashboard = ({ route }: Props) => {
 
   async function extractDog(dogDoc: firebase.firestore.QueryDocumentSnapshot<firebase.firestore.DocumentData>) {
 
-    const schedule = {} as DogSchedule
-    let newDog: DogObject = {
-      firstName: "",
-      middleName: "",
-      lastName: "",
-      members: [],
-      schedule: schedule,
-      key: "",
-    }
+    // const schedule = {} as DogSchedule
+    const newDog = {} as DogObject
+    // let newDog: DogObject = {
+    //   firstName: "",
+    //   middleName: "",
+    //   lastName: "",
+    //   members: [],
+    //   schedule: schedule,
+    //   key: "",
+    //   weeklyNeeds: {} as WeeklyNeeds
+    // }
 
     newDog.firstName = await dogDoc.data().firstName
     newDog.middleName = await dogDoc.data().middleName
     newDog.lastName = await dogDoc.data().lastName
     newDog.members = await dogDoc.data().members
     newDog.schedule = await dogDoc.data().schedule
+    newDog.weeklyNeeds = await dogDoc.data().weeklyNeeds
     newDog.key = dogDoc.id
 
     return newDog
@@ -102,7 +105,7 @@ const Dashboard = ({ route }: Props) => {
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
-    wait(1000).then(() => setRefreshing(false));
+    wait(LOADING_TIME_MS).then(() => setRefreshing(false));
   }, []);
 
   const renderDogCards = () => {

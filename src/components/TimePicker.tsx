@@ -1,13 +1,21 @@
 import React, { useState } from 'react'
-import { View, StyleSheet, Platform } from 'react-native'
+import { View, StyleSheet } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
 
-export default function TimePicker() {
-  const [date, setDate] = useState(new Date(1598051730000))
+type Props = {
+  onChange: (e) => void,
+  value: Date,
+}
+
+const TimePicker = ({ value, onChange }: Props) => {
+  const [date, setDate] = useState(value)
   const [mode, setMode] = useState('time')
 
-  const onChange = (event, selectedDate) => {
-    const currentDate = selectedDate || date;
+  const handleChange = (event: any, selectedDate: any) => {
+    // console.log("selected Date: " + selectedDate)
+
+    onChange(selectedDate)
+    const currentDate = selectedDate || date
     setDate(currentDate)
   }
 
@@ -20,8 +28,7 @@ export default function TimePicker() {
         mode="time"
         is24Hour={true}
         display="default"
-        onChange={onChange}
-        textColor="red"
+        onChange={handleChange}
       />
     </View>
   )
@@ -32,3 +39,5 @@ const styles = StyleSheet.create({
     marginVertical: 15,
   },
 })
+
+export default TimePicker

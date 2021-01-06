@@ -3,29 +3,48 @@ Make Loading Screen
 
 Current Task(s):
 
-  Implement time picker (link it) and time hook
-
-  Dog Weekly activity Needs has to be apart of dog object
-  Enforce number of days taken (have the Weekly Needs section updated and throw alerts when needs already met)
-
+  update to git -m "SingleDogDashboard functionality complete and basic testing done"
+  
   When Adding dog member, implement phone number reader and make surer (implement w/ twilio)
-  Give functionality to "REQUEST SCHEDULE CHANGE W/ OMER" (sends text)
+  Give functionality to "REQUEST SCHEDULE CHANGE W/ OMER" (sends text) (need user phone number at sign up)
 
-  Allow to delete people from dog (or duplicate of yourself)/edit dog
-  Make cards bigger or get names to fit better (Ginger Q..)
+  Allow to delete people from dog (or duplicate of yourself)/edit dog/Delete Dog itself
+  Make cards bigger or get names to fit better (Gingeri.. || Ginger\nisNumberOne)
 
-  Figure out if we want user to schedule anybody, just themselves, or anybody with conditions
-  (message or notification sent) --> SOLUTION: ANYBODY FOR NOW
+  Send notification when day the day before that the next day is not taken yet
 
   May know way to have refresh work, have a state for refresh in both background and main component,
   main passes to background (OR USE: https://dev.to/muhammadawaisshaikh/how-to-get-an-updated-state-of-child-component-in-the-parent-component-using-the-callback-method-1i5)
 
+
+
 Current Problem(s):
+
+  Enforce number of days taken (have the Weekly Needs section updated and throw alerts when needs already met)
+
   Currently, SingleDogDashboard Reserving days works perfectly as expected
     HOWEVER, dogHook is still being updated before setDogHook is called, even though we know it is only connected to shallow copies
 
-  react-native time picker will only install up to 3.0.0 on expo, but we need 3.0.1 to resolve current bug
-  solution is to get different package now :( or try upgrading expo (commit changes first)
+  Child list error in Dashboard ONLY FIRST TIME RUNNING APP
+  Warning when starting app about expo globals
+
+  can't change text color of time picker, on reload it should be red, here is path to change color: (NOT WORKING)
+  AwesomeProjectTSX/node_modules/@react-native-community/datetimepicker/src/datetimepicker.ios.js
+
+
+
+  Completed Tasks (from January 5th):
+
+    Have weekly needs update based on changed
+      Test Cases:
+        Reserve day first time someone else (CLEARED)
+        Reserve day for self (CLEARED)
+        Save changes for self (same dayType) (CLEARED)
+        Save changes for self (different dayType) (CLEARED)
+        Save changes for someone else (same dayType) (CLEARED)
+        Save changes for someone else (different dayType) (CLEARED)
+        Unreserve day (haven't implemented this yet ) (CLEARED)
+
 
 Future Tasks:
   How to use app instructions
