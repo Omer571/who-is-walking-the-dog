@@ -18,11 +18,11 @@ type Props = {
 const AddDogScreen = ({ route }: Props) => {
   useEffect( () => console.log("mount SingleDogDashboard"), [] );
   useEffect( () => () => console.log("unmount SingleDogDashboard"), [] );
-  
-  const navigation = useNavigation();
-  const { user } = route.params
 
-  let [numberOfBoxes, setNumberOfBoxes] = useState<number>(0);
+  const navigation = useNavigation()
+  const { user } = route.params
+  // console.log("User in AddDog Screen: " + JSON.stringify(user))
+  let [numberOfBoxes, setNumberOfBoxes] = useState<number>(0)
 
   return (
     <AddDogBackground>

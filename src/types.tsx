@@ -4,17 +4,32 @@ export type Route = {
     dog: DogObject,
     user: UserData,
   },
-};
+}
 
 export type Navigation = {
   navigate: (scene: string) => void;
-};
+}
 
 export type UserData = {
   id: string,
   email: string,
   name: string,
-};
+  phoneNumber: string,
+  dogs: DogObject[],
+  push_token: string,
+}
+
+export type UserMemberData = {
+  id: string,
+  email: string,
+  name: string,
+  phoneNumber: string,
+  dogs: DogObject[],
+  push_token: string,
+  todayPushNotificationIdentifier: string,
+  todayFinalPushNotificationIdentifier: string,
+  tomorrowPushNotificationIdentifier: string,
+}
 
 export type DogFamilyMember = {
   dataKey: string,
@@ -23,7 +38,7 @@ export type DogFamilyMember = {
 }
 
 export type DayInfo = {
-  walkerName: string,
+  walker: UserData,
   time: string,
   dayType: string,
 }
@@ -45,6 +60,16 @@ export type WeeklyNeeds = {
 }
 
 export type DogObject = {
+  firstName: string,
+  middleName: string,
+  lastName: string,
+  members: Array<UserMemberData>,
+  schedule: DogSchedule,
+  key: string,
+  weeklyNeeds: WeeklyNeeds,
+}
+
+export type TempDogObject = {
   firstName: string,
   middleName: string,
   lastName: string,

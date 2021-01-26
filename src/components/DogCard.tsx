@@ -13,7 +13,7 @@ type Props = {
 }
 
 const DogCard = ({ user, cardKey, dogName, members, dog }: Props) => {
-  const navigation = useNavigation();
+  const navigation = useNavigation()
   return (
     <Card key={cardKey} style={styles.card} onPress={() => navigation.navigate('SingleDogDashboard', {
       user: user,

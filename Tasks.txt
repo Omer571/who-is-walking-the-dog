@@ -3,24 +3,45 @@ Make Loading Screen
 
 Current Task(s):
 
-  update to git -m "SingleDogDashboard functionality complete and basic testing done"
-  
-  When Adding dog member, implement phone number reader and make surer (implement w/ twilio)
-  Give functionality to "REQUEST SCHEDULE CHANGE W/ OMER" (sends text) (need user phone number at sign up)
+  TODO WEEK NEEDS TO RESET SUNDAY NIGHT (and that's when weekly notification sent out (8:00 Sunday night (already done)))
+  So in Dashboard, have a use effect function called if (time == 8 pm on sunday) resetWeek() -> clears dog.schedule in DB and local dog
 
-  Allow to delete people from dog (or duplicate of yourself)/edit dog/Delete Dog itself
-  Make cards bigger or get names to fit better (Gingeri.. || Ginger\nisNumberOne)
-
-  Send notification when day the day before that the next day is not taken yet
+  TODO React-background timer is your savior
 
   May know way to have refresh work, have a state for refresh in both background and main component,
   main passes to background (OR USE: https://dev.to/muhammadawaisshaikh/how-to-get-an-updated-state-of-child-component-in-the-parent-component-using-the-callback-method-1i5)
 
+  Connect so that if user deletes account, they are deleted from firestore AND auth
 
+  Need to check if phone number already in db when adding members (and throw error is so)
 
-Current Problem(s):
+  Give forgot your password button functionality
+  When entering Bottom fields on sign up, we can't see input behind keyboard (consider multiple log in screens)
 
-  Enforce number of days taken (have the Weekly Needs section updated and throw alerts when needs already met)
+  Allow to delete people from dog (or duplicate of yourself)/edit dog/Delete Dog itself
+  Make cards bigger or get names to fit better (Gingeri.. || Ginger\nisNumberOne)
+
+  Delete SaveDog method as it is no longer needed (dog saved to user)
+
+  SaveLogIn state
+
+  getData in Dashboard may not be necessary, since we have user passed from login/signup (check this later)
+
+  Test Notification sending thing later on w/Leah
+
+  Need to think about what happens when person is still not part of app yet but name is in dropdown
+
+  Fix back button
+
+  TODO Make dog hook instead of local dog and user
+  (or call dog local dog)
+  (this may take some time - decide if this is what you want to do while refactoring)
+
+  TODO Test Request Schedule Change with Leeah
+
+  TODO Need to delete user on logout (only one push token per device) (later, for right now we are using this to test functionality)
+
+Current Problem(s) too fix in future:
 
   Currently, SingleDogDashboard Reserving days works perfectly as expected
     HOWEVER, dogHook is still being updated before setDogHook is called, even though we know it is only connected to shallow copies
@@ -31,9 +52,105 @@ Current Problem(s):
   can't change text color of time picker, on reload it should be red, here is path to change color: (NOT WORKING)
   AwesomeProjectTSX/node_modules/@react-native-community/datetimepicker/src/datetimepicker.ios.js
 
+  TODO Send notification when day the day before that the next day is not taken yet
+  TODO If ginger not taken out, send sad message at night
 
+  How about once the day is registered for, that day's notification is canceled
+  So we would have 7 daily notifications (7 for today reminder, and 7 for tomorrow, possibly 7 for sad notification)
+  Once that day is registered for, that notification is turned off (both reminders)
+
+  When Dog
+  When Reserve day clicked, notification cancelled
+  When unreserve clicked, notification on
+
+  Problem is, current code only works when notification is get for whole group
+  First lets test and make sure this it the case
+  Start with testing with nothing registered
+  Then test after someone else done
+
+  For some reason dogs is an empty {} rather than an array of dogObjects in Dashboards?
+  Problem is dogs isn't updated by the time it tries to render dog cards. I used loadingHooks
+  to try to make the process work but it still fails. Reconsider complex push Notifications
 
   Completed Tasks (from January 5th):
+
+    Improve current notification for request schedule change
+    (button to unreserve day offered, send notification to other person denying request)
+    (NOT POSSIBLE AS WELL)
+
+    (Saturday will be special case where users encouraged to schedule days for pura week)
+
+    Finish functionality for "REQUEST SCHEDULE CHANGE W/ OMER" (push notification)
+
+    When we update one dogs schedule, it will not update other dogs schedule
+    (Solution: Iterate through dog.members updating each one)
+
+    Getting "Error: Objects are not valid as a React child (found: object with keys {}).
+    If you meant to render a collection of children, use an array instead." When trying to load SingleDogDashboard
+    (Solution: walker type was previously changed from type string to UserData, we needed to accommodate for that)
+
+    Push Token missing for currentUser in dog.members (issue w/ passing user as param)
+    (solution: needed to create new Navigation to accept new parameters, not be restricted by old ones))
+
+    Delete Users, sign up again with yourself and dummy character (DONE)
+    Test: adding dog, requesting schedule change, check if program is correctly
+    finding existing and non existing users
+
+    Dog isn't being saved to other existing users (Fixed, needed to change addDogToUserCollection)
+
+    So it looks addDogScreen doesn't move to next screen like it's supposed to,
+    also unhandled promise warning thrown, fix next time.
+    (fixed - problem was customObject instead of js object being set())
+
+    Instead of using member, what if we attached dogFamilyMember directly to user,
+    would this be a problem since it's kind of cyclical? What if we just did user id?
+    ALSO, if user doesn't exist with that phoneNumber, you are given the option to send
+    them a text to sign up (via alert into our sms function we wrote)
+    Steps:
+      AddDogFormTwoHelpers needs to change and return list of existingMembers as UserData[]
+      Change addDogToUserCollection and member type for dog.member (UserData)
+      Look for other places this caused errors
+    when family names entered, need to make sure that name doesn't exist in current dogs family
+    (if we attach to user this isn't a problem)
+
+    After throwing error in updateDogInCollection it still changes to unEditableTextInput (left alone)
+
+    Time to remove dog and test, just have user dogs
+    Turn dogs into subcollection of user (
+      DONE AddDogForm(for add),
+      DONE SingleDogDashboard(for update),
+      DONE Dashboard (for get)
+    )
+
+    PROBLEM: Twilio doesn't seem to be compatible with react native
+    uninstall rn-nodeify
+    undo these: https://stackoverflow.com/questions/36415157/twilio-react-native-unable-to-resolve-module-crypto
+    uninstall twilio
+    find new messenger = Expo.SMS
+
+    Finish coding Notification and SMS sending to new dogs family members
+
+    Set up notifications with iOS
+    https://docs.expo.io/push-notifications/overview/
+
+    Need to enforce phone number being added to members (may already be done)
+
+    Possible Problems, Currently loads all dogs, what is we just want dogs for that user? (dog has user, user has dog)
+    (Currently doesn't work, we may need to push the actual doc rather than DogObject, look into this more)
+    (May need not even need dogs collection, check and think about!)
+
+    Need to make sure unique key created for each dog, delete dogs and re-add
+
+    Check if phoneNumber exists in DB
+
+    InitialDogObject in AddDogForm NEEDS USER PHONE NUMBER
+
+    Implement phone Number validator with libphonenumberjs
+    Implement phone number input with react-native-phone-input
+
+    Enforce number of days taken (have the Weekly Needs section updated and throw alerts when needs already met)
+
+    update to git commit -m "SingleDogDashboard functionality complete and basic testing done"
 
     Have weekly needs update based on changed
       Test Cases:
@@ -45,11 +162,12 @@ Current Problem(s):
         Save changes for someone else (different dayType) (CLEARED)
         Unreserve day (haven't implemented this yet ) (CLEARED)
 
+    Switch all Twilio code to Expo.SMS
 
 Future Tasks:
   How to use app instructions
-  Need to Clean up dashboard (very messy)
-  Allow Dogs needs to be changable
+  Need to Clean up dashboard, addDogFormTwo and singleDogDashboard
+  Allow Dogs needs to be changeable
   made defaultDogObject.tsx, import it in needed files (ex) AddDogForm (may not need to any more: const user: User = {} as any)
   Switch alerts to react native paper dialog
   just pass dog object to card and extract info in card component (remove duplicate code with dog and dogName (several places))
@@ -57,4 +175,5 @@ Future Tasks:
   Add function to make array for keys of member memberInputs
   check to make sure proper number of member Inputs not succeeded with keys
   When fetching members, make sure the names don't go outside of cards (vertically and horizontally)
-  put types in types.tsx and use imports
+  put all types in types.tsx and use imports
+  Make Error messages in Seperate file

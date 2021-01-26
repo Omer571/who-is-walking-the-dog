@@ -1,20 +1,22 @@
-import React, { memo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import IntroBackground from '../components/IntroBackground';
-import Logo from '../components/Logo';
-import Header from '../components/Header';
-import Button from '../components/Button';
-import TextInput from '../components/TextInput';
-import BackButton from '../components/BackButton';
-import { theme } from '../core/theme';
-import { firebase } from '../firebase/config';
-import { useNavigation } from '@react-navigation/native';
+import React, { memo, useState } from 'react'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import IntroBackground from '../components/IntroBackground'
+import Logo from '../components/Logo'
+import Header from '../components/Header'
+import Button from '../components/Button'
+import TextInput from '../components/TextInput'
+import BackButton from '../components/BackButton'
+import { theme } from '../core/theme'
+import { firebase } from '../firebase/config'
+import { useNavigation } from '@react-navigation/native'
+import PhoneInput from "react-native-phone-number-input"
 
 import {
   emailValidator,
   passwordValidator,
   nameValidator,
-} from '../core/utils';
+  phoneNumberValidator,
+} from '../core/utils'
 
 // type Props = {
 //   navigation: Navigation;
@@ -22,28 +24,36 @@ import {
 
 const RegisterScreen = () => {
 
-  const navigation = useNavigation();
+  const navigation = useNavigation()
 
-  const [name, setName] = useState({ value: '', error: '' });
-  const [email, setEmail] = useState({ value: '', error: '' });
-  const [password, setPassword] = useState({ value: '', error: '' });
-  const [confirmPassword, setConfirmPassword] = useState({ value: '', error: '' });
+  const [name, setName] = useState({ value: '', error: '' })
+  const [email, setEmail] = useState({ value: '', error: '' })
+  const [password, setPassword] = useState({ value: '', error: '' })
+  const [phoneNumber, setPhoneNumber] = useState({ value: '', error: ''})
+  const [confirmPassword, setConfirmPassword] = useState({ value: '', error: '' })
 
   const _onSignUpPressed = () => {
-    const nameError = nameValidator(name.value);
-    const emailError = emailValidator(email.value);
-    const passwordError = passwordValidator(password.value);
+    const nameError = nameValidator(name.value)
+    const emailError = emailValidator(email.value)
+    const phoneNumberError = phoneNumberValidator(phoneNumber.value)
+    const passwordError = passwordValidator(password.value)
+
+    if (phoneNumberError) {
+      setPhoneNumber({ ...phoneNumber, error: phoneNumberError})
+      alert(phoneNumberError)
+      return
+    }
 
     if (emailError || passwordError || nameError) {
-      setName({ ...name, error: nameError });
-      setEmail({ ...email, error: emailError });
-      setPassword({ ...password, error: passwordError });
-      return;
+      setName({ ...name, error: nameError })
+      setEmail({ ...email, error: emailError })
+      setPassword({ ...password, error: passwordError })
+      return
     }
 
     if (password.value !== confirmPassword.value) {
-        alert("Passwords don't match.");
-        return;
+        alert("Passwords don't match.")
+        return
     }
 
     firebase
@@ -52,23 +62,26 @@ const RegisterScreen = () => {
         .then((response) => {
           if (response.user) {
             const uid = response.user.uid
-            const emailValue = email.value;
-            const nameValue = name.value;
+            const emailValue = email.value
+            const phoneNumberValue = phoneNumber.value
+            const nameValue = name.value
             const userData = {
                 id: uid,
                 email: emailValue,
+                phoneNumber: phoneNumberValue,
                 name: nameValue,
+                push_token: "",
             };
             const usersRef = firebase.firestore().collection('users')
             usersRef
                 .doc(uid)
                 .set(userData)
                 .then(() => {
-                    navigation.navigate('Dashboard', userData ); // PASSUSERHERE
+                    navigation.navigate('Dashboard', userData ) // PASSUSERHERE
                 })
                 .catch((error) => {
                     alert(error)
-                });
+                })
           }
         })
         .catch((error) => {
@@ -86,7 +99,7 @@ const RegisterScreen = () => {
       <Header>Create Account</Header>
 
       <TextInput
-        label="Name"
+        label="First Name"
         returnKeyType="next"
         value={name.value}
         onChangeText={text => setName({ value: text, error: '' })}
@@ -127,6 +140,18 @@ const RegisterScreen = () => {
         secureTextEntry
       />
 
+      <PhoneInput
+          defaultValue=""
+          containerStyle={styles.phoneNumberInput}
+          placeholder="2817787989"
+          defaultCode="US"
+          layout="first"
+          onChangeFormattedText={text => setPhoneNumber({ value: text, error: '' })}
+          withDarkTheme
+          withShadow
+          autoFocus
+      />
+
       <Button mode="contained" onPress={_onSignUpPressed} style={styles.button}>
         Sign Up
       </Button>
@@ -138,12 +163,16 @@ const RegisterScreen = () => {
         </TouchableOpacity>
       </View>
     </IntroBackground>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   label: {
     color: theme.colors.secondary,
+  },
+  phoneNumberInput: {
+    marginVertical: 15,
+    width: 300,
   },
   button: {
     marginTop: 24,
@@ -156,6 +185,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: theme.colors.primary,
   },
-});
+})
 
-export default memo(RegisterScreen);
+export default memo(RegisterScreen)

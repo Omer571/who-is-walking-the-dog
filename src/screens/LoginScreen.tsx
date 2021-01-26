@@ -9,10 +9,10 @@ import BackButton from '../components/BackButton';
 import { theme } from '../core/theme';
 import { emailValidator, passwordValidator } from '../core/utils';
 import { firebase }from '../firebase/config';
-import { Navigation } from '../types';
+import { Navigation, Route } from '../types';
 
 type Props = {
-  navigation: Navigation;
+  navigation: Navigation,
 };
 
 const LoginScreen = ({ navigation }: Props) => {
@@ -45,6 +45,7 @@ const LoginScreen = ({ navigation }: Props) => {
                       return;
                   }
                   const user = firestoreDocument.data()
+                  // console.log("User in Login Screen: " + JSON.stringify(user))
                   navigation.navigate('Dashboard')   // PASS USER HERE
               })
               .catch(error => {

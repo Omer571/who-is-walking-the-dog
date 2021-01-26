@@ -1,53 +1,60 @@
-import React, { useState } from 'react';
-import { StyleSheet, TextInput, View, Keyboard } from 'react-native';
-import Button from './Button';
-import { firebase } from '../firebase/config';
-import { DogFamilyMember, DogSchedule, DogObject, Route } from '../types';
-import { useNavigation } from '@react-navigation/native';
-
-// const defaultDay: TypeDay = {
-//   walkDay: false,
-//   restDay: false,
-//   parkDay: false,
-// }
+import React, { useState, useRef } from 'react'
+import { StyleSheet, TextInput, View, Keyboard, Alert } from 'react-native'
+import Button from './Button'
+import { firebase } from '../firebase/config'
+import { DogFamilyMember, DogSchedule, DogObject, TempDogObject, Route, UserData, UserMemberData } from '../types'
+import { useNavigation } from '@react-navigation/native'
+import parsePhoneNumber from 'libphonenumber-js'
+import PhoneInput from "react-native-phone-number-input"
+import {
+  convertTempDogObjectToDogObject,
+  getNonExistingMembers,
+  getOtherExistingUsers,
+  sendPushNotificationToExistingUsers,
+  sendSMS,
+  getPhoneNumbersFromMembers,
+  getUsersFromCollection,
+  fromCustomTypeToPureJSObject,
+} from "../AddDogFormTwoHelpers"
 
 const WALKING_DAYS_PER_WEEK = 4
 const OUTING_DAYS_PER_WEEK = 2
 const REST_DAYS_PER_WEEK = 1
 
+const EMPTY_FAMILY_MEMBER = {} as UserData
 const defaultDogSchedule: DogSchedule = {
   monday: {
-    walkerName: "",
+    walker: EMPTY_FAMILY_MEMBER,
     time: "06:15:00 PM",
     dayType: "",
   },
   tuesday: {
-    walkerName: "",
+    walker: EMPTY_FAMILY_MEMBER,
     time: "06:15:00 PM",
     dayType: "",
   },
   wednesday: {
-    walkerName: "",
+    walker: EMPTY_FAMILY_MEMBER,
     time: "06:15:00 PM",
     dayType: "",
   },
   thursday: {
-    walkerName: "",
+    walker: EMPTY_FAMILY_MEMBER,
     time: "06:15:00 PM",
     dayType: "",
   },
   friday: {
-    walkerName: "",
+    walker: EMPTY_FAMILY_MEMBER,
     time: "06:15:00 PM",
     dayType: "",
   },
   saturday: {
-    walkerName: "",
+    walker: EMPTY_FAMILY_MEMBER,
     time: "06:15:00 PM",
     dayType: "",
   },
   sunday: {
-    walkerName: "",
+    walker: EMPTY_FAMILY_MEMBER,
     time: "06:15:00 PM",
     dayType: "",
   },
@@ -56,34 +63,149 @@ const defaultDogSchedule: DogSchedule = {
 type Props = {
   numberOfFamilyBoxes: Number,
   user: Route["params"]["user"],
-};
+}
 
-const AddDogFormTwo = (props: Props ) => {
+const displayButtonAlert = (title: string, message: string, onPressFunction: () => void) => {
+  return Alert.alert(
+      title,
+      message,
+      [
+        {
+          text: "Cancel",
+          onPress: () => console.log("Cancel Pressed"),
+          style: "cancel"
+        },
+        { text: "OK", onPress: () => onPressFunction() }
+      ],
+      { cancelable: true }
+    )
+}
 
-  const dogRef = firebase.firestore().collection('dogs')
-  const navigation = useNavigation();
 
-  const saveDog = (dog: DogObject) => {
-    if (dog.firstName) {
-      dogRef
-        .add(dog)
-        .then(_doc => {
-            alert("Dog Added!")
-            Keyboard.dismiss()
-            navigation.goBack()
-            //navigation.navigate('Dashboard')
-        })
-        .catch((error) => {
-            alert(error)
-        });
+
+const AddDogFormTwo = (props: Props) => {
+  const navigation = useNavigation()
+  const { user } = props
+  const currentUser = user
+
+  const handleSubmit = async (tempDog: TempDogObject) => {
+    // Make sure the phone number fields are filled
+    const petFamilyMembers = tempDog.members
+    const petFamilyMemberNumbers: string[] = []
+    for (let member of petFamilyMembers) {
+      if (member.phoneNumber)
+        petFamilyMemberNumbers.push(member.phoneNumber)
+      else {
+        alert("A phone number is missing from member " + member.name)
+        return
+      }
+    }
+
+    // Validate phone numbers
+    if (areValidPhoneNumbers(petFamilyMemberNumbers)) {
+
+      await getUsersFromCollection().then((users) => {
+
+        let otherUsers = getOtherExistingUsers(tempDog, currentUser, users)
+        let allExistingUsers = otherUsers.concat([currentUser])
+        let nonExistingMembers = getNonExistingMembers(tempDog, currentUser, users)
+
+        console.log("Existing Users: " + JSON.stringify(allExistingUsers))
+        console.log("NonExisting Users: " + JSON.stringify(nonExistingMembers))
+
+        sendPushNotificationToExistingUsers(otherUsers)
+
+        // Prompt to send all SMS to missing members at once
+        if (nonExistingMembers.length > 0) {
+          displayButtonAlert(
+            "Some Members aren't on the App",
+            "The following family member's phone numbers aren't registered with the app. Would you like to send a text?",
+            () => {
+              const smsMessage = "Hello! You've been invited to be " + tempDog.firstName + "'s Family Member but your phone number isn't registered with us. Try signing up first and ask for another invite!"
+              sendSMS(smsMessage, getPhoneNumbersFromMembers(nonExistingMembers))
+            }
+          )
+        }
+
+        let allExistingUsersAsUserMemberData: UserMemberData[] = []
+        let userMemberData = {} as UserMemberData
+        for (let existingUser of allExistingUsers) {
+          userMemberData.todayFinalPushNotificationIdentifier = ""
+          userMemberData.todayPushNotificationIdentifier = ""
+          userMemberData.tomorrowPushNotificationIdentifier = ""
+          userMemberData.id = existingUser.id
+          userMemberData.name = existingUser.name
+          userMemberData.email = existingUser.email
+          userMemberData.phoneNumber = existingUser.phoneNumber
+          userMemberData.push_token = existingUser.push_token
+          allExistingUsersAsUserMemberData.push(userMemberData)
+        }
+        let dogToAddToCollection = convertTempDogObjectToDogObject(tempDog)
+        dogToAddToCollection.members = allExistingUsersAsUserMemberData
+        addDogToUserCollection(allExistingUsers, dogToAddToCollection)
+
+      })
     } else {
-      alert("Must add the dogs first name!")
+      displayButtonAlert(
+        "Invalid Phone Number",
+        "Please make sure all phone numbers are correctly entered.",
+        () => {},
+      )
     }
   }
 
-  const { user } = props
+  const areValidPhoneNumbers = (numbers: string[]) => {
+    let phoneNumber: any
+    console.log("Processing the numbers: " + numbers)
+    for (let number of numbers) {
+      phoneNumber = parsePhoneNumber(number, 'US')
+      if (!phoneNumber || !phoneNumber.isValid()) {
+        console.log(number + " is not valid")
+        return false
+      }
+      console.log(number + " is valid")
+    }
+    return true
+  }
+
+  const addDogToUserCollection = async (users: UserData[], dog: DogObject) => {
+    // console.log("Before trying to update: " + JSON.stringify(user.dogs))
+    if (!dog.firstName) {
+      console.log("ERROR - Dog does not have first name in updateDogInCollection. \
+      This should have been previously validated in input.")
+      return
+    }
+
+    // Make empty dog doc and get
+    const newDogDoc = firebase.firestore().collection('users').doc(currentUser.id).collection('dogs').doc()
+    const newDogDocRef = await newDogDoc.get()
+    // Now use that id to find and set dog empty doc, now we can set key attribute to it's id
+    for (let user of users) {
+      const dogRef = firebase.firestore().collection('users').doc(user.id).collection('dogs').doc(newDogDocRef.id)
+      dogRef
+        .set({
+            firstName: dog.firstName,
+            middleName: dog.middleName,
+            lastName: dog.lastName,
+            key: newDogDocRef.id,
+            members: fromCustomTypeToPureJSObject(dog.members),
+            schedule: dog.schedule,
+            weeklyNeeds: dog.weeklyNeeds,
+        })
+        .then(() => {
+          dog.key = newDogDocRef.id  // Update local dog copy
+          console.log("User " + user.name + " should now have another dog w/ id/key:" + newDogDocRef.id)
+        })
+        .catch((error) => {
+            alert(error)
+        })
+    }
+    Keyboard.dismiss()
+    navigation.goBack()
+  }
 
   const MemberInputBox = (props: { dataKey: string }) => {
+    const phoneInput = useRef<PhoneInput>(null)
     const { dataKey } = props
     if (memberInputs.length === 1) {
       alert("Make sure NOT to add your own name, you will be automatically included as Family Member! :)")
@@ -94,40 +216,40 @@ const AddDogFormTwo = (props: Props ) => {
           style={styles.familyMemberInput}
           placeholder="Family Member Name"
           onChangeText={(newFamilyMemberName) => setDogData(prevDogData => {
-            // Needs to be separate function
             const thisMemberIndex = prevDogData.members.findIndex((member: DogFamilyMember) => member.dataKey === dataKey);
             prevDogData.members[thisMemberIndex].name = newFamilyMemberName;
             return {
               ...prevDogData,
-              schedule: defaultDogSchedule,
             }
           })}
         />
-        <TextInput
-          style={styles.familyMemberInput}
-          placeholder="2817366840"
-          onChangeText={(newFamilyMemberNumber) => setDogData(prevDogData => {
-            // Needs to be separate function?
-            const thisMemberIndex = prevDogData.members.findIndex((member: DogFamilyMember) => member.dataKey === dataKey);
-            prevDogData.members[thisMemberIndex].phoneNumber = newFamilyMemberNumber;
-
-            return {
-              ...prevDogData,
-              schedule: defaultDogSchedule,
-            }
-          })}
+        <PhoneInput
+            ref={phoneInput}
+            placeholder="Mobile Phone Number Here such as --> 2817787989"
+            defaultCode="US"
+            layout="first"
+            onChangeFormattedText={(newFamilyMemberNumber: string) => setDogData(prevDogData => {
+              const thisMemberIndex = prevDogData.members.findIndex((member: DogFamilyMember) => member.dataKey === dataKey)
+              prevDogData.members[thisMemberIndex].phoneNumber = newFamilyMemberNumber
+              return {
+                ...prevDogData,
+              }
+            })}
+            withDarkTheme
+            withShadow
+            autoFocus
         />
       </View>
     );
   }
 
-  const initialDogObject: DogObject = {
+  const initialTempDogObject: TempDogObject = {
     firstName: "",
     middleName: "",
     lastName: "",
-    members: [{dataKey: '0', phoneNumber: "", name: user.name}], // need user object to have phoneNumber later (or not? user doesn't need to send phone number to self)
+    members: [{dataKey: '0', phoneNumber: user.phoneNumber, name: user.name}], // need user object to have phoneNumber later (or not? user doesn't need to send phone number to self)
     schedule: defaultDogSchedule,
-    key: '',
+    key: "",
     weeklyNeeds: {
       walks: WALKING_DAYS_PER_WEEK,
       outings: OUTING_DAYS_PER_WEEK,
@@ -135,15 +257,16 @@ const AddDogFormTwo = (props: Props ) => {
     }
   }
 
-  const [dogData, setDogData] = useState<DogObject>(initialDogObject)
+  const [dogData, setDogData] = useState<TempDogObject>(initialTempDogObject)
 
   let [memberInputs, setMemberInputs] = useState<JSX.Element[]>([])
 
   const addOneMemberInput = (key: number) => {
+
     // THIS SHOULD BE TWO SEPARATE FUNCTIONS
     // Add input to array of inputs to be rendered to screen
-    let tempMemberInputs = memberInputs;
-    tempMemberInputs.push(<MemberInputBox key={key.toString()} dataKey={key.toString()}/>);
+    let tempMemberInputs = memberInputs
+    tempMemberInputs.push(<MemberInputBox key={key.toString()} dataKey={key.toString()}/>)
     setMemberInputs(tempMemberInputs)
 
     // Add member to dogData.members array
@@ -152,7 +275,6 @@ const AddDogFormTwo = (props: Props ) => {
       prevDogData.members.push(newMember)
       return {
         ...prevDogData,
-        schedule: defaultDogSchedule,
       }
     })
   };
@@ -180,7 +302,6 @@ const AddDogFormTwo = (props: Props ) => {
           return {
             ...prevDogData,
             firstName: newFirstName,
-            schedule: defaultDogSchedule,
           }
         })}
       />
@@ -191,7 +312,6 @@ const AddDogFormTwo = (props: Props ) => {
           return {
             ...prevDogData,
             middleName: newMiddleName,
-            schedule: defaultDogSchedule,
           }
         })}
       />
@@ -202,12 +322,11 @@ const AddDogFormTwo = (props: Props ) => {
           return {
             ...prevDogData,
             lastName: newLastName,
-            schedule: defaultDogSchedule,
           }
         })}
       />
       {memberInputs.map((element) => { return element})}
-      <Button mode={'contained'} onPress={() => { saveDog(dogData) }}>Submit</Button>
+      <Button mode={'contained'} onPress={() => { handleSubmit(dogData) }}>Submit</Button>
     </View>
   )
 }
@@ -228,4 +347,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddDogFormTwo;
+export default AddDogFormTwo

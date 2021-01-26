@@ -1,5 +1,5 @@
 import React, { useEffect, useState, memo } from 'react'
-import { View, StyleSheet, Text, Alert } from 'react-native'
+import { Linking, View, StyleSheet, Text, Alert } from 'react-native'
 import { TextInput } from 'react-native-paper'
 import SingleDogDashboardBackground from '../components/SingleDogDashboardBackground';
 import SmallLogo from '../components/SmallLogo'
@@ -9,10 +9,11 @@ import SmallButton from '../components/SmallButton'
 import BackButton from '../components/BackButton'
 import Dropdown from '../components/Dropdown'
 import TimePicker from '../components/TimePicker'
-import { Navigation, Route, DogObject, DayInfo } from '../types'
+import { Navigation, Route, DogObject, DayInfo, UserData } from '../types'
 import { firebase } from '../firebase/config'
 import moment from 'moment'
 import { ensureTwelveHourFormat } from '../SingleDogDashboardHelpers'
+import { sendPushNotification, makeInteractive } from '../PushNotificationHelpers'
 
 type Props = {
   navigation: Navigation,
@@ -37,16 +38,6 @@ const convertTime12to24 = (time12: string) => {
 }
 
 
-/**
- * [convertStringTimeToDate description]
- * @param  {[type]} time [description]
- * @return {[type]}      [description]
- *
- * @example
- * time = "11:16:00 PM"
- * convertStringTimeToDate(time)
- *
- */
 const convertTwelveHourStringTimeToDate = (time12: string) => {
   // Ensure Format
   if (!ensureTwelveHourFormat(time12))
@@ -134,13 +125,13 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
 
   const [nameDropdown, setNameDropdown] = useState<DropdownStateType>({
     // If the dog doesn't already have walker for given day, user is default option
-    monday: (dog.schedule.monday.walkerName ? dog.schedule.monday.walkerName : user.name),
-    tuesday: (dog.schedule.tuesday.walkerName ? dog.schedule.tuesday.walkerName : user.name),
-    wednesday: (dog.schedule.wednesday.walkerName ? dog.schedule.wednesday.walkerName : user.name),
-    thursday: (dog.schedule.thursday.walkerName ? dog.schedule.thursday.walkerName : user.name),
-    friday: (dog.schedule.friday.walkerName ? dog.schedule.friday.walkerName : user.name),
-    saturday: (dog.schedule.saturday.walkerName ? dog.schedule.saturday.walkerName : user.name),
-    sunday: (dog.schedule.sunday.walkerName ? dog.schedule.sunday.walkerName : user.name),
+    monday: (dog.schedule.monday.walker.name ? dog.schedule.monday.walker.name : user.name),
+    tuesday: (dog.schedule.tuesday.walker.name ? dog.schedule.tuesday.walker.name : user.name),
+    wednesday: (dog.schedule.wednesday.walker.name ? dog.schedule.wednesday.walker.name : user.name),
+    thursday: (dog.schedule.thursday.walker.name ? dog.schedule.thursday.walker.name : user.name),
+    friday: (dog.schedule.friday.walker.name ? dog.schedule.friday.walker.name : user.name),
+    saturday: (dog.schedule.saturday.walker.name ? dog.schedule.saturday.walker.name : user.name),
+    sunday: (dog.schedule.sunday.walker.name ? dog.schedule.sunday.walker.name : user.name),
   })
 
   const [dayTypeDropdown, setDayTypeDropdown] = useState<DropdownStateType>({
@@ -168,8 +159,32 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
 
   const [dogHook, setDogHook] = useState<DogObject>(makeDogObjectCopy(dog))
 
+  function clearDogScheduleInCollection(dog: DogObject) {
+    if (dog.schedule) {
+      for (let day in dog.schedule) {
+        console.log("empty schedule")
+      }
+      const dogRef = firebase.firestore().collection('users').doc(user.id).collection('dogs').doc(dog.key)
+      dogRef
+        .update({
+            schedule: dog.schedule,
+        })
+        .then(_doc => {
+            setDogHook(makeDogObjectCopy(dog))
+        })
+        .catch((error) => {
+            throw "error in updateDogInUserCollections: " + error
+        })
+    }
+  }
+
   useEffect( () => {
-    console.log("UseEffect Mount")
+    // Reset schedule oncee it is 9 pm Sunday
+    let thisMoment = new Date()
+    if (thisMoment.getDay() === 7 && thisMoment.getHours() >= 21 && thisMoment.getHours() < 22) {
+      console.log("It is Sunday 9 PM... Resetting Week")
+
+    }
   }, [] )
 
 
@@ -177,7 +192,7 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
     let dayData = getDayData(dog, day)
     const previousDayType = dayData.dayType
 
-    dayData.walkerName = ""
+    dayData.walker.name = ""
     dayData.dayType = ""
 
     // Update Weekly Needs back
@@ -194,9 +209,21 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
     }
   }
 
+  const findMemberByName = (name: string) => {
+    for (let member of dog.members) {
+      if (member.name === name) {
+        return member
+      }
+    }
+
+    throw "ERROR - Name in dropdown does not match any existing dog.member name. \Something went very wrong internally."
+
+  }
+
   // BAD FUNCTION: Currently does two things (schedule and weeklyNeeds)
   const updateDogSchedule = (day: string, previousDayType: string) => {
     let dayType = ""
+    let nameToSearchFor = ""
     let dayFound = true
     let previousDogBackup = makeDogObjectCopy(dog)
 
@@ -205,53 +232,53 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
         dog.schedule.monday.dayType = dayTypeDropdown.monday
         dayType = dayTypeDropdown.monday
         dog.schedule.monday.time = timesDropdown.monday
-        dog.schedule.monday.walkerName = nameDropdown.monday
-        dog.schedule.monday.walkerName = dog.schedule.monday.walkerName.replace(" (You)", "") // If someone has " (You)"  in their name and this removes it, thats bad practice
+        nameToSearchFor = nameDropdown.monday.replace(" (You)", "")
+        dog.schedule.monday.walker = findMemberByName(nameToSearchFor)
         break
       case "TUESDAY":
         dog.schedule.tuesday.dayType = dayTypeDropdown.tuesday
         dayType = dayTypeDropdown.tuesday
         dog.schedule.tuesday.time = timesDropdown.tuesday
-        dog.schedule.tuesday.walkerName = nameDropdown.tuesday
-        dog.schedule.tuesday.walkerName = dog.schedule.tuesday.walkerName.replace(" (You)", "") // If someone has " (You)"  in their name and this removes it, thats bad practice
+        nameToSearchFor = nameDropdown.tuesday.replace(" (You)", "")
+        dog.schedule.tuesday.walker = findMemberByName(nameToSearchFor)
         break
       case "WEDNESDAY":
         dog.schedule.wednesday.dayType = dayTypeDropdown.wednesday
         dayType = dayTypeDropdown.wednesday
         dog.schedule.wednesday.time = timesDropdown.wednesday
-        dog.schedule.wednesday.walkerName = nameDropdown.wednesday
-        dog.schedule.wednesday.walkerName = dog.schedule.wednesday.walkerName.replace(" (You)", "") // If someone has " (You)"  in their name and this removes it, thats bad practice
+        nameToSearchFor = nameDropdown.wednesday.replace(" (You)", "")
+        dog.schedule.wednesday.walker = findMemberByName(nameToSearchFor)
         break
       case "THURSDAY":
         dog.schedule.thursday.dayType = dayTypeDropdown.thursday
         dayType = dayTypeDropdown.thursday
         dog.schedule.thursday.time = timesDropdown.thursday
-        dog.schedule.thursday.walkerName = nameDropdown.thursday
-        dog.schedule.thursday.walkerName = dog.schedule.thursday.walkerName.replace(" (You)", "") // If someone has " (You)"  in their name and this removes it, thats bad practice
+        nameToSearchFor = nameDropdown.thursday.replace(" (You)", "")
+        dog.schedule.thursday.walker = findMemberByName(nameToSearchFor)
         break
       case "FRIDAY":
         dog.schedule.friday.dayType = dayTypeDropdown.friday
         dayType = dayTypeDropdown.friday
         dog.schedule.friday.time = timesDropdown.friday
-        dog.schedule.friday.walkerName = nameDropdown.friday
-        dog.schedule.friday.walkerName = dog.schedule.friday.walkerName.replace(" (You)", "") // If someone has " (You)"  in their name and this removes it, thats bad practice
+        nameToSearchFor = nameDropdown.friday.replace(" (You)", "")
+        dog.schedule.friday.walker = findMemberByName(nameToSearchFor)
         break
       case "SATURDAY":
         dog.schedule.saturday.dayType = dayTypeDropdown.saturday
         dayType = dayTypeDropdown.saturday
         dog.schedule.saturday.time = timesDropdown.saturday
-        dog.schedule.saturday.walkerName = nameDropdown.saturday
-        dog.schedule.saturday.walkerName = dog.schedule.saturday.walkerName.replace(" (You)", "") // If someone has " (You)"  in their name and this removes it, thats bad practice
+        nameToSearchFor = nameDropdown.saturday.replace(" (You)", "")
+        dog.schedule.saturday.walker = findMemberByName(nameToSearchFor)
         break
       case "SUNDAY":
         dog.schedule.sunday.dayType = dayTypeDropdown.sunday
         dayType = dayTypeDropdown.sunday
         dog.schedule.sunday.time = timesDropdown.sunday
-        dog.schedule.sunday.walkerName = nameDropdown.sunday
-        dog.schedule.sunday.walkerName = dog.schedule.sunday.walkerName.replace(" (You)", "") // If someone has " (You)"  in their name and this removes it, thats bad practice
+        nameToSearchFor = nameDropdown.sunday.replace(" (You)", "")
+        dog.schedule.sunday.walker = findMemberByName(nameToSearchFor)
         break
       default:
-        console.log("ERROR - Something has gone very wrong in updateDog. The day passed does not match a day Monday-Sunday.")
+        console.log("SingleDogDashboard ERROR - Something has gone very wrong in updateDog. The day passed does not match a day Monday-Sunday.")
         dayFound = false
         break
     }
@@ -310,30 +337,26 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
   }
 
 
-  const saveDogSchedule = () => {
+  const updateDogInUserCollections = () => {
     // If dog doesn't have a firstName it must be the example dog since firstName entry enforced
     if (!dog.firstName) {
       alert("Can't mess with the example dog silly! ")
     } else {
-      const dogRef = firebase.firestore().collection('dogs').doc(dog.key)
-      dogRef
-        .update({
-            schedule: dog.schedule,
-            weeklyNeeds: dog.weeklyNeeds,
-        })
-        .then(_doc => {
-            // console.log("dog.schedule.monday BEFORE setDogHook called: " + JSON.stringify(dog.schedule.monday))
-            // console.log("dog === dogHook?: " + (dogHook === dog))
-            // console.log("dog === initialDog?: " + (dog === initialDog))
-            // console.log("dogHook.schedule.monday BEFORE setDogHook called: " + JSON.stringify(dogHook.schedule.monday))
-
-            setDogHook(makeDogObjectCopy(dog))
-            // setTimeout(() => console.log("dogHook.schedule.monday AFTER setDogHook called: " + JSON.stringify(dogHook.schedule.monday)) , 1000)
-            // console.log("\nDog Schedule should be updated and dog hook refreshed!\n")
-        })
-        .catch((error) => {
-            alert(error)
-        });
+      for (let user of dog.members) {
+        console.log("Updating dog's schedule with key of: " + dog.key + " for user: " + user.name)
+        const dogRef = firebase.firestore().collection('users').doc(user.id).collection('dogs').doc(dog.key)
+        dogRef
+          .update({
+              schedule: dog.schedule,
+              weeklyNeeds: dog.weeklyNeeds,
+          })
+          .then(_doc => {
+              setDogHook(makeDogObjectCopy(dog))
+          })
+          .catch((error) => {
+              throw "error in updateDogInUserCollections: " + error
+          })
+      }
     }
   }
 
@@ -346,7 +369,7 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
       displayButtonAlert(
         "Reserve Day",
         "You are reserving " + day + " as a " + dogDayData.dayType + " day for " + dogDayData.time,
-        saveDogSchedule,
+        updateDogInUserCollections,
       )
     }
   }
@@ -356,7 +379,7 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
     displayButtonAlert(
       "Clearing this day",
       "You are un-reserving the day: " + day,
-      saveDogSchedule,
+      updateDogInUserCollections,
     )
   }
 
@@ -376,6 +399,20 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
       );
   }
 
+  const handleScheduleChangeRequest = (walker: UserData, day: string) => {
+    const push_token = walker.push_token
+    const title = "Schedule Change Request"
+    const message = user.name + " would like to take your day: " + day
+    sendPushNotification(
+      push_token,
+      title,
+      message,
+      dogHook,
+      walker
+    )
+    // Give option to clear given day at button click (may need screen - look all this up)
+
+  }
 
   const EditableDayInput = (day: string) => {
 
@@ -435,9 +472,9 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
         <Dropdown options={DAY_TYPES} defaultOption={dayData.dayType ? dayData.dayType : "Walk"} priority={1000} onChange={(newDayType) => { onDayTypeChange(newDayType, day) }} />
         <TimePicker value={initialTimePickerDate} onChange={(newTime) => { onTimeChange(newTime, day) }}/>
         <Button style={styles.editableTextInput} mode="outlined" onPress={() => handleReserveClick(day, previousDayType)}>
-          {(dayData.walkerName === user.name) ? "Save Changes": "Reserve Day"}
+          {(dayData.walker.name === user.name) ? "Save Changes": "Reserve Day"}
         </Button>
-        {(dayData.walkerName === user.name) ?
+        {(dayData.walker.name === user.name) ?
           <Button style={[styles.editableTextInput, styles.unreserveButton]} mode="contained" onPress={() => handleUnreserveClick(day)}>
             Unreserve Day
           </Button>: null
@@ -450,10 +487,10 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
     let dayData = getDayData(dogHook, day)
     return (
       <View>
-        <TextInput label={dayData.walkerName} style={styles.unEditableTextInput} disabled={true} mode="outlined"/>
+        <TextInput label={dayData.walker.name} style={styles.unEditableTextInput} disabled={true} mode="outlined"/>
         <TextInput label={dayData.time} style={styles.unEditableTextInput} disabled={true} mode="outlined"/>
         <TextInput label={dayData.dayType} style={styles.unEditableTextInput} disabled={true} mode="outlined"/>
-        <SmallButton mode="contained">Request Schedule Change w/ {dayData.walkerName}</SmallButton>
+        <SmallButton onPress={() => { handleScheduleChangeRequest(dayData.walker, day) }} mode="contained">Request Schedule Change w/ {dayData.walker.name}</SmallButton>
       </View>
     )
   }
@@ -461,7 +498,6 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
   const WALKS_FULFILLED_MESSAGE = "WALKING DAYS FILLED :)"
   const OUTINGS_FULFILLED_MESSAGE = "OUTING DAYS FILLED :)"
   const RESTS_FULFILLED_MESSAGE = "REST DAYS FILLED :)"
-
   return (
     <SingleDogDashboardBackground>
       <BackButton goBack={() => navigation.navigate('Dashboard')} />
@@ -482,40 +518,39 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
           : <Text style={styles.weeklyNeeds}>{RESTS_FULFILLED_MESSAGE}</Text>
         }
         <UnderlinedHeader>Monday
-          {(dogHook.schedule.monday.walkerName === user.name) ? <Text style={styles.userDay}> (Your Day)</Text>: ""}
+          {(dogHook.schedule.monday.walker.name === user.name) ? <Text style={styles.userDay}> (Your Day)</Text>: ""}
         </UnderlinedHeader>
-        {(user.name === dogHook.schedule.monday.walkerName || "" === dogHook.schedule.monday.walkerName) ? EditableDayInput("Monday"): UnEditableDayInput("Monday")}
+        {(user.name === dogHook.schedule.monday.walker.name || !dogHook.schedule.monday.walker.name) ? EditableDayInput("Monday"): UnEditableDayInput("Monday")}
 
         <UnderlinedHeader>Tuesday
-          {(dogHook.schedule.tuesday.walkerName === user.name) ? <Text style={styles.userDay}> (Your Day)</Text>: ""}
+          {(dogHook.schedule.tuesday.walker.name === user.name) ? <Text style={styles.userDay}> (Your Day)</Text>: ""}
         </UnderlinedHeader>
-        {(user.name === dogHook.schedule.tuesday.walkerName || "" === dogHook.schedule.tuesday.walkerName) ? EditableDayInput("Tuesday"): UnEditableDayInput("Tuesday")}
+        {(user.name === dogHook.schedule.tuesday.walker.name || !dogHook.schedule.tuesday.walker.name) ? EditableDayInput("Tuesday"): UnEditableDayInput("Tuesday")}
 
         <UnderlinedHeader>Wednesday
-          {(dogHook.schedule.wednesday.walkerName === user.name) ? <Text style={styles.userDay}> (Your Day)</Text>: ""}
+          {(dogHook.schedule.wednesday.walker.name === user.name) ? <Text style={styles.userDay}> (Your Day)</Text>: ""}
         </UnderlinedHeader>
-        {(user.name === dogHook.schedule.wednesday.walkerName || "" === dogHook.schedule.wednesday.walkerName) ? EditableDayInput("Wednesday"): UnEditableDayInput("Wednesday")}
+        {(user.name === dogHook.schedule.wednesday.walker.name || !dogHook.schedule.wednesday.walker.name) ? EditableDayInput("Wednesday"): UnEditableDayInput("Wednesday")}
 
         <UnderlinedHeader>Thursday
-          {(dogHook.schedule.thursday.walkerName === user.name) ? <Text style={styles.userDay}> (Your Day)</Text>: ""}
+          {(dogHook.schedule.thursday.walker.name === user.name) ? <Text style={styles.userDay}> (Your Day)</Text>: ""}
         </UnderlinedHeader>
-        {(user.name === dogHook.schedule.thursday.walkerName || "" === dogHook.schedule.thursday.walkerName) ? EditableDayInput("Thursday"): UnEditableDayInput("Thursday")}
+        {(user.name === dogHook.schedule.thursday.walker.name || !dogHook.schedule.thursday.walker.name) ? EditableDayInput("Thursday"): UnEditableDayInput("Thursday")}
 
         <UnderlinedHeader>Friday
-          {(dogHook.schedule.friday.walkerName === user.name) ? <Text style={styles.userDay}> (Your Day)</Text>: ""}
+          {(dogHook.schedule.friday.walker.name === user.name) ? <Text style={styles.userDay}> (Your Day)</Text>: ""}
         </UnderlinedHeader>
-        {(user.name === dogHook.schedule.friday.walkerName || "" === dogHook.schedule.friday.walkerName) ? EditableDayInput("Friday"): UnEditableDayInput("Friday")}
+        {(user.name === dogHook.schedule.friday.walker.name || !dogHook.schedule.friday.walker.name) ? EditableDayInput("Friday"): UnEditableDayInput("Friday")}
 
         <UnderlinedHeader>Saturday
-          {(dogHook.schedule.saturday.walkerName === user.name) ? <Text style={styles.userDay}> (Your Day)</Text>: ""}
+          {(dogHook.schedule.saturday.walker.name === user.name) ? <Text style={styles.userDay}> (Your Day)</Text>: ""}
         </UnderlinedHeader>
-        {(user.name === dogHook.schedule.saturday.walkerName || "" === dogHook.schedule.saturday.walkerName) ? EditableDayInput("Saturday"): UnEditableDayInput("Saturday")}
+        {(user.name === dogHook.schedule.saturday.walker.name || !dogHook.schedule.saturday.walker.name) ? EditableDayInput("Saturday"): UnEditableDayInput("Saturday")}
 
         <UnderlinedHeader>Sunday
-          {(dogHook.schedule.sunday.walkerName === user.name) ? <Text style={styles.userDay}> (Your Day)</Text>: ""}
+          {(dogHook.schedule.sunday.walker.name === user.name) ? <Text style={styles.userDay}> (Your Day)</Text>: ""}
         </UnderlinedHeader>
-        {(user.name === dogHook.schedule.sunday.walkerName || "" === dogHook.schedule.sunday.walkerName) ? EditableDayInput("Sunday"): UnEditableDayInput("Sunday")}
-
+        {(user.name === dogHook.schedule.sunday.walker.name || !dogHook.schedule.sunday.walker.name) ? EditableDayInput("Sunday"): UnEditableDayInput("Sunday")}
       </View>
       <Button mode="outlined" onPress={() => navigation.navigate('HomeScreen')}>
         Logout

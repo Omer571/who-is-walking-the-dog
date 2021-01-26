@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect } from 'react'
+import React, { useState, useEffect, memo } from 'react'
 import {
   ImageBackground,
   RefreshControl,
@@ -11,15 +11,36 @@ import SmallLogo from '../components/SmallLogo'
 import UnderlinedHeader from '../components/UnderlinedHeader'
 import Button from '../components/Button'
 import DogCard from '../components/DogCard'
-import { useNavigation } from '@react-navigation/native'
-import { Route, DogObject, UserData } from '../types'
+import { Route, DogObject, UserData, Navigation, DayInfo } from '../types'
 import emptyDogObject from '../emptyDogObject'
 import { firebase } from '../firebase/config'
+import { dogConverter } from '../dogConverter'
+import { useNavigation } from '@react-navigation/native'
+import * as Notifications from 'expo-notifications'
+import {
+  scheduleWeeklyPushNotification,
+  registerForPushNotificationsAsync,
+  scheduleTodayReminder,
+  scheduleTomorrowReminder,
+  scheduleTodayFinalReminder,
+  cancelPushNotification,
+  cancelAllPushNotifications,
+ } from '../PushNotificationHelpers'
+
 
 const MAX_CARDS = 10;
 const LOADING_TIME_MS = 1000
 
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+})
+
 function getMemberNames(dog: DogObject) {
+  console.log("Dog Members: " + JSON.stringify(dog.members))
   const memberNames = dog.members.map((member: any) => {
     return member.name
   })
@@ -45,74 +66,147 @@ const wait = (timeout: number) => {
 
 type Props = {
   route: Route,
+  navigation: Navigation,
 };
 
 const Dashboard = ({ route }: Props) => {
 
-  const [refreshing, setRefreshing] = React.useState(false);
-  const [loading, setLoading] = useState(false);
-  const navigation = useNavigation();
+  const [refreshing, setRefreshing] = React.useState(false)
+  const [loadingDogData, setLoadingDogData] = useState(false)
+  const [loadingDailyNotifications, setLoadingDailyNotifications] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [todayPushNotificationIdentifier, setTodayPushNotificationIdentifier] = useState<string>("")
+  const [tomorrowPushNotificationIdentifier, setTomorrowPushNotificationIdentifier] = useState<string>("")
+  const [todayFinalPushNotificationIdentifier, setTodayFinalPushNotificationIdentifier] = useState<string>("")
+
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+    }),
+  })
+
+  const navigation = useNavigation()
   const { user } = route.params
+  // console.log("route.params in Dashboard: " + JSON.stringify(route.params))
+  // console.log("User in Dashboard: " + JSON.stringify(user))
   const [dogs, setDogs] = useState<DogObject[]>([])
 
-  async function extractDog(dogDoc: firebase.firestore.QueryDocumentSnapshot<firebase.firestore.DocumentData>) {
-
-    // const schedule = {} as DogSchedule
-    const newDog = {} as DogObject
-    // let newDog: DogObject = {
-    //   firstName: "",
-    //   middleName: "",
-    //   lastName: "",
-    //   members: [],
-    //   schedule: schedule,
-    //   key: "",
-    //   weeklyNeeds: {} as WeeklyNeeds
-    // }
-
-    newDog.firstName = await dogDoc.data().firstName
-    newDog.middleName = await dogDoc.data().middleName
-    newDog.lastName = await dogDoc.data().lastName
-    newDog.members = await dogDoc.data().members
-    newDog.schedule = await dogDoc.data().schedule
-    newDog.weeklyNeeds = await dogDoc.data().weeklyNeeds
-    newDog.key = dogDoc.id
-
-    return newDog
+  function updateUserToken(token: string) {
+    var userRef = firebase.firestore().collection("users").doc(user.id)
+      userRef.update({
+        push_token: token,
+      })
+      .then(() => {
+        console.log("push_token for current user updated: " + token)
+        user.push_token = token // local copy over user passed between screens
+        // sendTestPushNotificationAndSMS(token)
+      })
+      .catch((error) => {
+        console.error("Error updating user's push_token: ", error)
+      })
   }
 
-  function getData() {
-    if (!loading) {
-      setLoading(true)
 
-      let tempDogs: DogObject[] = []
+  function getDogData() {
+    if (!loadingDogData) {
+      setLoadingDogData(true)
 
-      var dogRef = firebase.firestore().collection("dogs")
-      dogRef.get().then((docs) => {
-        docs.forEach((doc) => {
-          extractDog(doc).then((dog) => {
-            tempDogs.push(dog)
-          })
+      var dogRef = firebase.firestore().collection('users').doc(user.id).collection('dogs').withConverter(dogConverter)
+      dogRef.get().then((querySnapshot) => {
+        let dogs: DogObject[] = []
+        let dogData: DogObject
+        querySnapshot.forEach(doc => {
+          dogData = doc.data()
+          dogs.push(dogData)
         })
-        setDogs(tempDogs)
+
+        setDogs(dogs)
         wait(LOADING_TIME_MS).then(() => {
-          setLoading(false)
+          setLoadingDogData(false)
         })
       })
     }
   }
 
-  useEffect(() => getData(), [refreshing]);
+  // Needs to be global helper
+  function getDayData(dog: DogObject, day: number) {
+    let dayData = {} as DayInfo
+    switch (day) {
+      case 2:
+        dayData = dog.schedule.monday
+        break
+      case 3:
+        dayData = dog.schedule.tuesday
+        break
+      case 4:
+        dayData = dog.schedule.wednesday
+        break
+      case 5:
+        dayData = dog.schedule.thursday
+        break
+      case 6:
+        dayData = dog.schedule.friday
+        break
+      case 7:
+        dayData = dog.schedule.saturday
+        break
+      case 1:
+        dayData = dog.schedule.sunday
+        break
+      default:
+        throw Error("getDayData: day passed was not a day of the week\ndayData.time ")
+    }
+    return dayData
+  }
+
+
+  useEffect(() => {
+    getDogData()
+    registerForPushNotificationsAsync().then((token) => {
+      if (token)
+        updateUserToken(token)
+      else
+        throw "ERROR - Error updating user push_token"
+    })
+
+    // scheduleDailyReminders(dogs)
+    dogs.forEach((dog) => scheduleTodayReminder(dog.firstName))
+    scheduleWeeklyPushNotification()
+
+
+    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+      const data = response.notification.request.content.data
+      const user = data.user
+      let dog: any
+
+      if (data.dog) {
+        dog = JSON.parse(JSON.stringify(data.dog)) // a trick to get type from unknown to any
+      }
+      if (user && dog) {
+        navigation.navigate('SingleDogDashboard', {
+          user: user,
+          dogName: dog.firstName,
+          dog: dog,
+        })
+      }
+    })
+
+    return () => console.log("addNotificationResponse Subscripton Removed" + subscription.remove())
+  }, [refreshing])
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
-    wait(LOADING_TIME_MS).then(() => setRefreshing(false));
-  }, []);
+    wait(LOADING_TIME_MS).then(() => setRefreshing(false))
+  }, [])
 
   const renderDogCards = () => {
     if (dogs.length === 0) {
       return createDefaultDogCard(user)
     }
     return dogs.map((dog, index) => {
+      console.log("Dogs: " + JSON.stringify(dog))
       if (index <= MAX_CARDS)
         return createDogCard(dog, user)
       else if (index - 1 == MAX_CARDS) {
@@ -137,7 +231,7 @@ const Dashboard = ({ route }: Props) => {
           {user ? <Text>Welcome {user.name}</Text> : <Text>Welcome User</Text>}
           <UnderlinedHeader>My Dogs</UnderlinedHeader>
           <View style={styles.cardView}>
-            {!loading ? (
+            {(!loadingDogData && !loadingDailyNotifications) ? (
             renderDogCards()
           ) : <Text>Loading Dogs</Text>}
 
@@ -145,7 +239,9 @@ const Dashboard = ({ route }: Props) => {
           <Button
             mode="contained"
             onPress={() => {
-              navigation.navigate('AddDogScreen', { user: user })}
+              navigation.navigate('AddDogScreen', {
+                user: user,
+              })}
             }
           >
             Add Dog
@@ -183,4 +279,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default memo(Dashboard);
+export default memo(Dashboard)
