@@ -1,5 +1,5 @@
 import * as Notifications from 'expo-notifications';
-import { DogObject, UserData } from './types'
+import { DogObject, UserData } from '../types'
 
 export const sendPushNotification = (receiverToken: string ,title: string, message: string, dog: DogObject, user: UserData) => {
   fetch('https://exp.host/--/api/v2/push/send', {

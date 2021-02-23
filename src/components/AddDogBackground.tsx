@@ -1,21 +1,26 @@
-import React, { memo } from 'react';
+import React, { memo } from 'react'
+import NavBar from '../components/NavBar'
+import { UserData, Navigation } from '../types'
 import {
   ImageBackground,
   StyleSheet,
   KeyboardAvoidingView,
   ScrollView,
-} from 'react-native';
+} from 'react-native'
 
 type Props = {
-  children: React.ReactNode;
-};
+  children: React.ReactNode,
+  user: UserData,
+  navigation: Navigation,
+}
 
-const AddDogBackground = ({ children }: Props) => (
+const AddDogBackground = ({ children, user, navigation }: Props) => (
   <ImageBackground
     source={require('../assets/background.png')}
     resizeMode="repeat"
     style={styles.background}
   >
+    <NavBar user={user} title={"Add Dog Form"} goBack={() => navigation.navigate('DashboardTwo')} />
     <ScrollView>
       <KeyboardAvoidingView style={styles.container} behavior="padding">
           {children}

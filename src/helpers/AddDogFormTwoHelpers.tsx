@@ -1,16 +1,49 @@
-import { DogObject, TempDogObject, DogFamilyMember, UserData } from './types'
-import { firebase } from './firebase/config'
+import { DogObject, TempDogObject, DogFamilyMember, UserData } from '../types'
+import { firebase } from '../firebase/config'
 import * as SMS from 'expo-sms'
-import { userConverter } from './userConverter'
+import userConverter from './userConverter'
 
+export const addDogToUserCollectionAsync = async (currentUser: UserData, users: UserData[], dog: DogObject) => {
+  // console.log("Before trying to update: " + JSON.stringify(user.dogs))
+  if (!dog.firstName) {
+    console.log("ERROR - Dog does not have first name in updateDogInCollection. \
+    This should have been previously validated in input.")
+    return
+  }
 
-export const getNonExistingMembers = (
+  // Make empty dog doc and get
+  const newDogDoc = firebase.firestore().collection('users').doc(currentUser.id).collection('dogs').doc()
+  const newDogDocRef = await newDogDoc.get()
+  // Now use that id to find and set dog empty doc, now we can set key attribute to it's id
+  for (let user of users) {
+    const dogRef = firebase.firestore().collection('users').doc(user.id).collection('dogs').doc(newDogDocRef.id)
+    dogRef
+      .set({
+          firstName: dog.firstName,
+          middleName: dog.middleName,
+          lastName: dog.lastName,
+          key: newDogDocRef.id,
+          members: fromCustomTypeToPureJSObject(dog.members),
+          schedule: dog.schedule,
+          weeklyNeeds: dog.weeklyNeeds,
+      })
+      .then(() => {
+        dog.key = newDogDocRef.id  // Update local dog copy
+        console.log("User " + user.name + " should now have another dog w/ id/key:" + newDogDocRef.id)
+      })
+      .catch((error) => {
+          alert(error)
+      })
+  }
+}
+
+export const getUnRegisteredMembers = (
   dog: TempDogObject,
   currentUser: UserData,
   users: UserData[],
 ) => {
 
-  const nonExistingMembers: DogFamilyMember[] = []
+  const nonRegisteredMembers: DogFamilyMember[] = []
 
   let petFamilyMembers = dog.members
   for (let member of petFamilyMembers) {
@@ -24,11 +57,11 @@ export const getNonExistingMembers = (
     if (isMemberInCollection(member, users)) {
       continue
     } else {
-      nonExistingMembers.push(member)
+      nonRegisteredMembers.push(member)
     }
   }
 
-  return nonExistingMembers
+  return nonRegisteredMembers
 
 }
 
@@ -60,7 +93,7 @@ export const sendPushNotification = (receiverToken: string ,title: string, messa
   })
 }
 
-const isMemberInCollection = (member: DogFamilyMember, users: UserData[]) => {
+export const isMemberInCollection = (member: DogFamilyMember, users: UserData[]) => {
 
   if (!users) {
     throw "ERROR - No Users in Collection (even current user)"
@@ -82,7 +115,7 @@ export const getUsersFromCollection = async () => {
     docs.forEach((doc) => {
       let user = doc.data()
       users.push(user)
-      // console.log("Pushed user: " + user.name)
+      // console.log("Pushed user: " + JSON.stringify(user))
     })
   })
 
@@ -98,7 +131,7 @@ export const getPhoneNumbersFromMembers = (members: DogFamilyMember[]) => {
   return phoneNumbers
 }
 
-export const getOtherExistingUsers = (
+export const getOtherRegisteredUsers = (
   dog: TempDogObject,
   currentUser: UserData,
   users: UserData[]
@@ -126,10 +159,10 @@ export const getOtherExistingUsers = (
   return existingUsers
 }
 
-export const sendPushNotificationToExistingUsers = (existingUsers: UserData[]) => {
+export const sendPushNotificationToUsers = (existingUsers: UserData[], dogName: string) => {
   for (let user of existingUsers) {
     let pushToken = user.push_token
-    let pushNotificationMessage = "Hello " + user.name + ". You've been joined to Ginger's Family. Click to take a look!"
+    let pushNotificationMessage = "Hello " + user.name + ". You've been joined to" + dogName + "'s Family. Click to take a look!"
     let pushNotificationTitle = "Welcome to the Family!"
     sendPushNotification(pushToken, pushNotificationTitle, pushNotificationMessage)
     console.log("\nNotification sent to " + user.name + "\n")

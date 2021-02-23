@@ -1,5 +1,4 @@
 import parsePhoneNumber from 'libphonenumber-js'
-import { firebase } from '../firebase/config'
 
 export const emailValidator = (email: string) => {
   const re = /\S+@\S+\.\S+/
@@ -22,29 +21,11 @@ export const nameValidator = (name: string) => {
   return ''
 }
 
-const getPhoneNumbers = () => {
-  let numbers: string[] = []
-
-  let userRef = firebase.firestore().collection("users")
-  userRef.get().then((docs) => {
-    docs.forEach((user) => {
-      numbers.push(user.data().phoneNumber)
-    })
-  })
-
-  return numbers
-}
-
-export const phoneNumberValidator = (phoneNumber: string) => {
+export const phoneNumberValidator = (phoneNumber: string): string => {
 
   const phoneNumberToValidate = parsePhoneNumber(phoneNumber, 'US')
   if (!phoneNumberToValidate || !phoneNumberToValidate.isValid()) {
     return 'Phone Number cannot be empty or invalid.'
-  }
-
-  const existingPhoneNumbers = getPhoneNumbers()
-  if (existingPhoneNumbers.includes(phoneNumber)) {
-    return 'Phone Number already exists for another user'
   }
 
   return ''

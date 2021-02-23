@@ -1,24 +1,27 @@
-import React, { memo, useState } from 'react';
-import { TouchableOpacity, StyleSheet, Text, View } from 'react-native';
-import IntroBackground from '../components/IntroBackground';
-import Logo from '../components/Logo';
-import Header from '../components/Header';
-import Button from '../components/Button';
-import TextInput from '../components/TextInput';
-import BackButton from '../components/BackButton';
-import { theme } from '../core/theme';
-import { emailValidator, passwordValidator } from '../core/utils';
-import { firebase }from '../firebase/config';
-import { Navigation, Route } from '../types';
+import React, { memo, useState } from 'react'
+import { TouchableOpacity, StyleSheet, Text, View } from 'react-native'
+import IntroBackground from '../components/IntroBackground'
+import Logo from '../components/Logo'
+import Header from '../components/Header'
+import Button from '../components/Button'
+import TextInput from '../components/TextInput'
+import BackButton from '../components/BackButton'
+import { rememberUser } from '../helpers/credentialStorage'
+import { theme } from '../core/theme'
+import { emailValidator, passwordValidator } from '../core/utils'
+import { firebase }from '../firebase/config'
+import { Navigation } from '../types'
+import { useNavigation } from '@react-navigation/native'
 
 type Props = {
   navigation: Navigation,
 };
 
-const LoginScreen = ({ navigation }: Props) => {
+const LoginScreen = ({}: Props) => {
   const [email, setEmail] = useState({ value: '', error: '' });
   const [password, setPassword] = useState({ value: '', error: '' });
 
+  const navigation = useNavigation()
   const _onLoginPressed = () => {
     const emailError = emailValidator(email.value);
     const passwordError = passwordValidator(password.value);
@@ -45,8 +48,15 @@ const LoginScreen = ({ navigation }: Props) => {
                       return;
                   }
                   const user = firestoreDocument.data()
-                  // console.log("User in Login Screen: " + JSON.stringify(user))
-                  navigation.navigate('Dashboard')   // PASS USER HERE
+
+                  // Remember User
+                  rememberUser(uid).then(() => {
+                    console.log("User Remembered for next time: " + uid)
+                  })
+
+                  navigation.navigate('DashboardTwo', {
+                    user: user,
+                  })
               })
               .catch(error => {
                   alert(error)
@@ -92,7 +102,7 @@ const LoginScreen = ({ navigation }: Props) => {
 
       <View style={styles.forgotPassword}>
         <TouchableOpacity
-          onPress={() => navigation.navigate('ForgotPasswordScreen')}
+          onPress={() => navigation.navigate('ForgetPasswordScreen')}
         >
           <Text style={styles.label}>Forgot your password?</Text>
         </TouchableOpacity>
@@ -109,8 +119,8 @@ const LoginScreen = ({ navigation }: Props) => {
         </TouchableOpacity>
       </View>
     </IntroBackground>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   forgotPassword: {

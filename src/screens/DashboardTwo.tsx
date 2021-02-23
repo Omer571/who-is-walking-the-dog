@@ -6,24 +6,33 @@ import {
   KeyboardAvoidingView,
   ScrollView,
 } from 'react-native';
+import DashboardContent from '../components/DashboardContent'
+import NavBar from '../components/NavBar'
+import { Route, Navigation } from '../types'
 
 type Props = {
-  children: React.ReactNode;
+  route: Route,
+  navigation: Navigation,
 };
 
 const wait = (timeout: number) => {
   return new Promise(resolve => {
-    setTimeout(resolve, timeout);
-  });
+    setTimeout(resolve, timeout)
+  })
 }
 
-const DashboardBackground = ({ children }: Props) => {
+
+const DashboardTwo = ({ route, navigation }: Props) => {
   const [refreshing, setRefreshing] = React.useState(false);
+  const { user } = route.params
+  const pageHeaderTitle = "Welcome " + user.name
 
   const onRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    wait(1000).then(() => setRefreshing(false));
-  }, []);
+    setRefreshing(true)
+    wait(1000).then(() => setRefreshing(false))
+  }, [])
+
+  // console.log("User in DashboardTwo: " + JSON.stringify(user))
 
   return (
     <ImageBackground
@@ -36,8 +45,9 @@ const DashboardBackground = ({ children }: Props) => {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
       >
+        <NavBar user={user} title={pageHeaderTitle} goBack={() => navigation.navigate('HomeScreen')} />
         <KeyboardAvoidingView style={styles.container} behavior="padding">
-          {children}
+          <DashboardContent route={route} navigation={navigation} refreshValue={refreshing}/>
         </KeyboardAvoidingView>
       </ScrollView>
     </ImageBackground>
@@ -54,9 +64,7 @@ const styles = StyleSheet.create({
     padding: 20,
     width: '100%',
     maxWidth: 340,
-    // alignSelf: 'center',
-    // justifyContent: 'center'
   },
 });
 
-export default memo(DashboardBackground);
+export default memo(DashboardTwo);

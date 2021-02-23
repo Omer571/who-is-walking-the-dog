@@ -10,12 +10,9 @@ const styles = StyleSheet.create({
   image: {
     width: 32,
     height: 32,
-    marginBottom: 4,
-    position: "absolute",
-    // left: "60%",
-    // bottom: "35%"
-    top: 10,
-    right: -10,
+    marginBottom: 2,
+    position: "relative",
+    marginRight: 15,
   },
 });
 

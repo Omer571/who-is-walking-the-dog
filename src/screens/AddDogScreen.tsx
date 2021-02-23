@@ -1,23 +1,22 @@
-import React, { useEffect, memo, useState } from 'react';
-import CircleButton from '../components/CircleButton';
-import UnderlinedHeader from '../components/UnderlinedHeader';
-import Header from '../components/Header';
-import Paragraph from '../components/Paragraph';
-import AddDogBackground from '../components/AddDogBackground';
-import BackButton from '../components/BackButton';
-import AddDogFormTwo from '../components/AddDogFormTwo';
+import React, { useEffect, memo, useState } from 'react'
+import CircleButton from '../components/CircleButton'
+import UnderlinedHeader from '../components/UnderlinedHeader'
+import Header from '../components/Header'
+import Paragraph from '../components/Paragraph'
+import AddDogBackground from '../components/AddDogBackground'
+import AddDogFormTwo from '../components/AddDogFormTwo'
 
-import { useNavigation } from '@react-navigation/native';
-import { Route } from '../types';
+import { useNavigation } from '@react-navigation/native'
+import { Route } from '../types'
 
 
 type Props = {
   route: Route,
-};
+}
 
 const AddDogScreen = ({ route }: Props) => {
-  useEffect( () => console.log("mount SingleDogDashboard"), [] );
-  useEffect( () => () => console.log("unmount SingleDogDashboard"), [] );
+  useEffect( () => console.log("mount SingleDogDashboard"), [] )
+  useEffect( () => () => console.log("unmount SingleDogDashboard"), [] )
 
   const navigation = useNavigation()
   const { user } = route.params
@@ -25,8 +24,7 @@ const AddDogScreen = ({ route }: Props) => {
   let [numberOfBoxes, setNumberOfBoxes] = useState<number>(0)
 
   return (
-    <AddDogBackground>
-      <BackButton goBack={() => navigation.navigate('Dashboard')} />
+    <AddDogBackground user={user} navigation={navigation}>
       <UnderlinedHeader>Dog Information</UnderlinedHeader>
       <AddDogFormTwo numberOfFamilyBoxes={numberOfBoxes} user={user}/>
       <Header>Share Pet w/ These Members {numberOfBoxes}</Header>

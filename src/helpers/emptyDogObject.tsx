@@ -1,4 +1,4 @@
-import { DogSchedule, DogObject } from './types'
+import { DogSchedule, DogObject } from '../types'
 
 const defaultDogSchedule: DogSchedule = {
   monday: {

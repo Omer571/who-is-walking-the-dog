@@ -1,28 +1,40 @@
-import React, { memo } from 'react';
+import React, { memo } from 'react'
+import NavBar from '../components/NavBar'
+import { useNavigation } from '@react-navigation/native'
+import { UserData } from '../types'
+
 import {
   ImageBackground,
   StyleSheet,
   KeyboardAvoidingView,
   ScrollView,
-} from 'react-native';
+} from 'react-native'
 
 type Props = {
-  children: React.ReactNode;
-};
+  user: UserData
+  title: string,
+  children: React.ReactNode,
+}
 
-const SingleDogDashboardBackground = ({ children }: Props) => (
-  <ImageBackground
-    source={require('../assets/background.png')}
-    resizeMode="repeat"
-    style={styles.background}
-  >
-    <KeyboardAvoidingView style={styles.container} behavior="padding">
-    <ScrollView>
-      {children}
-    </ScrollView>
-    </KeyboardAvoidingView>
-  </ImageBackground>
-);
+
+
+const SingleDogDashboardBackground = ({ user, title, children }: Props) => {
+  let navigation = useNavigation()
+  return (
+    <ImageBackground
+      source={require('../assets/background.png')}
+      resizeMode="repeat"
+      style={styles.background}
+    >
+      <NavBar user={user} title={title} goBack={ () => navigation.navigate('DashboardTwo') } />
+      <KeyboardAvoidingView style={styles.container} behavior="padding">
+      <ScrollView>
+        {children}
+      </ScrollView>
+      </KeyboardAvoidingView>
+    </ImageBackground>
+  )
+}
 
 const styles = StyleSheet.create({
   background: {

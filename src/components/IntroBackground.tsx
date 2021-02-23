@@ -1,24 +1,42 @@
-import React, { memo } from 'react';
+import React, { memo } from 'react'
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import {
   ImageBackground,
   StyleSheet,
-  KeyboardAvoidingView,
-} from 'react-native';
+  Keyboard,
+  TouchableWithoutFeedback,
+} from 'react-native'
 
 type Props = {
   children: React.ReactNode;
-};
+}
+
+type ScrollCoordinates = {
+  x: number,
+  y: number,
+}
+
+const SCROLL_COORDINATES: ScrollCoordinates = {
+  x: 0,
+  y: 0,
+}
 
 const IntroBackground = ({ children }: Props) => (
-  <ImageBackground
-    source={require('../assets/background.png')}
-    resizeMode="repeat"
-    style={styles.background}
-  >
-    <KeyboardAvoidingView style={styles.container} behavior="padding">
-      {children}
-    </KeyboardAvoidingView>
-  </ImageBackground>
+  <TouchableWithoutFeedback
+    onPress={() => {
+      console.log("Should be dismissing keyboad")
+      Keyboard.dismiss()
+  }}>
+    <ImageBackground
+      source={require('../assets/background.png')}
+      resizeMode="repeat"
+      style={styles.background}
+    >
+      <KeyboardAwareScrollView resetScrollToCoords={SCROLL_COORDINATES} contentContainerStyle={styles.container}>
+        {children}
+      </KeyboardAwareScrollView>
+    </ImageBackground>
+  </TouchableWithoutFeedback>
 );
 
 const styles = StyleSheet.create({

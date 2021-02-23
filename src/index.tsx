@@ -13,24 +13,26 @@ import {
   LoginScreen,
   RegisterScreen,
   ForgotPasswordScreen,
-  Dashboard,
+  DashboardTwo,
   SingleDogDashboard,
   AddDogScreen,
-} from './screens';
+  SettingsScreen,
+  IndividualDogSettingScreen,
+} from './screens'
 
-const Stack = createStackNavigator();
+const Stack = createStackNavigator()
 
 
 function App() {
 
   const [user, setUser] = useState<UserData | undefined>(undefined)
+
   const [initialRouteName, setInitialRouteName] = useState("")
 
   // Test if this works in actual app (login persistence)
   useEffect(() => {
-    const usersRef = firebase.firestore().collection('users');
-    let userDataObject: UserData = {name: "", email: "", id: "", phoneNumber: "", dogs: [], push_token: ""};
-    // put this into separate function later (or find cleaner way to do this)
+    const usersRef = firebase.firestore().collection('users')
+    let userDataObject: UserData = {name: "", email: "", id: "", phoneNumber: "", dogs: [], push_token: ""}
 
     firebase.auth().onAuthStateChanged(user => {
       if (user) {
@@ -49,7 +51,7 @@ function App() {
               userDataObject.push_token = ""
 
               setUser(userDataObject)
-              setInitialRouteName("Dashboard")
+              setInitialRouteName("DashboardTwo")
             } else {
               setUser(undefined)
               setInitialRouteName("HomeScreen")
@@ -60,19 +62,21 @@ function App() {
             alert(error)
           });
       }
-    });
+    })
   });
 
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName={initialRouteName}>
         <Stack.Screen name="HomeScreen" component={HomeScreen} />
-        <Stack.Screen name="Dashboard" component={Dashboard} initialParams={{ user: user }}/>
+        <Stack.Screen name="DashboardTwo" component={DashboardTwo} initialParams={{ user: user }}/>
         <Stack.Screen name="LoginScreen" component={LoginScreen} />
         <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
         <Stack.Screen name="ForgetPasswordScreen" component={ForgotPasswordScreen} />
         <Stack.Screen name="SingleDogDashboard" component={SingleDogDashboard} />
         <Stack.Screen name="AddDogScreen" component={AddDogScreen} />
+        <Stack.Screen name="SettingsScreen" component={SettingsScreen} initialParams={{ user: user }}/>
+        <Stack.Screen name="IndividualDogSettingScreen" component={IndividualDogSettingScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

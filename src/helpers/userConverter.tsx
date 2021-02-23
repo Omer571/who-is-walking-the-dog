@@ -1,4 +1,4 @@
-import { UserData, DogObject } from './types'
+import { UserData, DogObject } from '../types'
 
 class User {
   id: string
@@ -22,7 +22,7 @@ class User {
 }
 
 // Firestore data converter
-export var userConverter = {
+var userConverter = {
     toFirestore: function(user: UserData) {
         return {
             id: user.id,
@@ -33,8 +33,10 @@ export var userConverter = {
             push_token: user.push_token,
             }
     },
-    fromFirestore: function(snapshot, options){
+    fromFirestore: function(snapshot: any, options: any){
         const data = snapshot.data(options)
         return new User(data.id, data.email, data.name, data.phoneNumber, data.dogs, data.push_token)
     }
 }
+
+export default userConverter

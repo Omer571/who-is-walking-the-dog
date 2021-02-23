@@ -1,17 +1,8 @@
 import React, { useState, useEffect, memo } from 'react'
-import {
-  ImageBackground,
-  RefreshControl,
-  KeyboardAvoidingView,
-  ScrollView,
-} from 'react-native'
 import { Text, View, StyleSheet } from 'react-native'
-// import DashboardBackground from '../components/DashboardBackground'
-import SmallLogo from '../components/SmallLogo'
 import UnderlinedHeader from '../components/UnderlinedHeader'
 import Button from '../components/Button'
 import DogCard from '../components/DogCard'
-import NavBar from '../components/NavBar'
 import { Route, DogObject, UserData, Navigation, DayInfo } from '../types'
 import emptyDogObject from '../helpers/emptyDogObject'
 import { firebase } from '../firebase/config'
@@ -33,7 +24,6 @@ import {
 
 
  const TASK_NAME = "BACKGROUND_TASK"
- const OLD_TASK_NAME = "background-offline-upload-task"
  const INTERVAL = 5
 
  // console.log("Unregistering all current tasks: " + TaskManager.unregisterAllTasksAsync())
@@ -66,7 +56,7 @@ const RegisterBackgroundTask = async () => {
 RegisterBackgroundTask()
 
 
-const MAX_CARDS = 10;
+const MAX_CARDS = 10
 const LOADING_TIME_MS = 2000
 
 Notifications.setNotificationHandler({
@@ -104,11 +94,11 @@ const wait = (timeout: number) => {
 type Props = {
   route: Route,
   navigation: Navigation,
+  refreshValue: boolean,
 };
 
-const Dashboard = ({ route }: Props) => {
+const DashboardContent = ({ route, refreshValue }: Props) => {
 
-  const [refreshing, setRefreshing] = React.useState(false)
   const [loadingDogData, setLoadingDogData] = useState(false)
   const [loadingDailyNotifications, setLoadingDailyNotifications] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -234,12 +224,7 @@ const Dashboard = ({ route }: Props) => {
     })
 
     return () => console.log("addNotificationResponse Subscripton Removed" + subscription.remove())
-  }, [refreshing])
-
-  const onRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    wait(LOADING_TIME_MS).then(() => setRefreshing(false))
-  }, [])
+  }, [refreshValue])
 
   const renderDogCards = () => {
     if (dogs.length === 0) {
@@ -254,47 +239,31 @@ const Dashboard = ({ route }: Props) => {
     })
   }
 
-  const NavBarTitle = "Welcome " + user.name
   return (
-    <ImageBackground
-      source={require('../assets/background.png')}
-      resizeMode="repeat"
-      style={styles.background}
-    >
-      <ScrollView
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-      >
-        <NavBar user={user} title={NavBarTitle} goBack={() => navigation.navigate('HomeScreen')} />
-        <KeyboardAvoidingView style={styles.container} behavior="padding">
-          <SmallLogo />
-          {user ? <Text>Welcome {user.name}</Text> : <Text>Welcome User</Text>}
-          <UnderlinedHeader>My Dogs</UnderlinedHeader>
-          <View style={styles.cardView}>
-            {(!loadingDogData && !loadingDailyNotifications) ? (
-              renderDogCards()
-          ) : <Text>Loading Dogs</Text>}
+    <View>
+      <UnderlinedHeader>My Dogs</UnderlinedHeader>
+      <View style={styles.cardView}>
+        {(!loadingDogData && !loadingDailyNotifications) ? (
+          renderDogCards()
+      ) : <Text>Loading Dogs</Text>}
 
-          </View>
-          <Button
-            mode="contained"
-            onPress={() => {
-              navigation.navigate('AddDogScreen', {
-                user: user,
-              })}
-            }
-          >
-            Add Dog
-          </Button>
-          <Button mode="outlined" onPress={() => {
-            navigation.navigate('HomeScreen')}
-          }>
-            Logout
-          </Button>
-        </KeyboardAvoidingView>
-      </ScrollView>
-    </ImageBackground>
+      </View>
+      <Button
+        mode="contained"
+        onPress={() => {
+          navigation.navigate('AddDogScreen', {
+            user: user,
+          })}
+        }
+      >
+        Add Dog
+      </Button>
+      <Button mode="outlined" onPress={() => {
+        navigation.navigate('HomeScreen')}
+      }>
+        Logout
+      </Button>
+    </View>
   );
 }
 
@@ -320,4 +289,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default memo(Dashboard)
+export default memo(DashboardContent)

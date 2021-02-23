@@ -1,8 +1,7 @@
 import React, { useEffect, useState, memo } from 'react'
-import { Linking, View, StyleSheet, Text, Alert } from 'react-native'
+import { View, StyleSheet, Text, Alert } from 'react-native'
 import { TextInput } from 'react-native-paper'
-import SingleDogDashboardBackground from '../components/SingleDogDashboardBackground';
-import SmallLogo from '../components/SmallLogo'
+import SingleDogDashboardBackground from '../components/SingleDogDashboardBackground'
 import UnderlinedHeader from '../components/UnderlinedHeader'
 import Button from '../components/Button'
 import SmallButton from '../components/SmallButton'
@@ -12,8 +11,8 @@ import TimePicker from '../components/TimePicker'
 import { Navigation, Route, DogObject, DayInfo, UserData } from '../types'
 import { firebase } from '../firebase/config'
 import moment from 'moment'
-import { ensureTwelveHourFormat } from '../SingleDogDashboardHelpers'
-import { sendPushNotification, makeInteractive } from '../PushNotificationHelpers'
+import { ensureTwelveHourFormat } from '../helpers/SingleDogDashboardHelpers'
+import { sendPushNotification, makeInteractive } from '../helpers/PushNotificationHelpers'
 
 type Props = {
   navigation: Navigation,
@@ -498,10 +497,10 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
   const WALKS_FULFILLED_MESSAGE = "WALKING DAYS FILLED :)"
   const OUTINGS_FULFILLED_MESSAGE = "OUTING DAYS FILLED :)"
   const RESTS_FULFILLED_MESSAGE = "REST DAYS FILLED :)"
+  const SINGLE_DOG_DASHBOARD_NAVBAR_TITLE = dog.firstName + "'s Week"
   return (
-    <SingleDogDashboardBackground>
+    <SingleDogDashboardBackground user={user} title={SINGLE_DOG_DASHBOARD_NAVBAR_TITLE}>
       <BackButton goBack={() => navigation.navigate('Dashboard')} />
-      <SmallLogo />
       <UnderlinedHeader>{dogName} Schedule</UnderlinedHeader>
       <View style={styles.scheduleView}>
         <UnderlinedHeader>This Weeks Needs</UnderlinedHeader>

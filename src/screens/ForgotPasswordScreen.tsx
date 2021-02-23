@@ -9,6 +9,8 @@ import TextInput from '../components/TextInput';
 import { theme } from '../core/theme';
 import Button from '../components/Button';
 import { Navigation } from '../types';
+import { firebase }from '../firebase/config'
+import { displayButtonAlert } from '../helpers/SettingsHelpers'
 
 type Props = {
   navigation: Navigation;
@@ -25,8 +27,21 @@ const ForgotPasswordScreen = ({ navigation }: Props) => {
       return;
     }
 
-    navigation.navigate('LoginScreen');
-  };
+    let auth = firebase.auth()
+
+    auth.sendPasswordResetEmail(email.value).then(function() {
+
+      displayButtonAlert(
+        "Email Sent",
+        "Check you email at: " + email.value,
+        () => { navigation.navigate("LoginScreen") }
+      )
+
+    }).catch(function(error) {
+      alert(error)
+    })
+
+  }
 
   return (
     <IntroBackground>

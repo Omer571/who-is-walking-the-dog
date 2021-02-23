@@ -5,3 +5,6 @@ export { default as ForgotPasswordScreen } from './ForgotPasswordScreen';
 export { default as Dashboard } from './Dashboard';
 export { default as SingleDogDashboard } from './SingleDogDashboard';
 export { default as AddDogScreen } from './AddDogScreen';
+export { default as DashboardTwo } from './DashboardTwo'
+export { default as SettingsScreen } from './SettingsScreen'
+export { default as IndividualDogSettingScreen } from './IndividualDogSettingScreen'

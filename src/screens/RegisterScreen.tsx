@@ -10,7 +10,7 @@ import { theme } from '../core/theme'
 import { firebase } from '../firebase/config'
 import { useNavigation } from '@react-navigation/native'
 import PhoneInput from "react-native-phone-number-input"
-
+import { doesPhoneNumberAlreadyExistAsync } from '../helpers/phoneNumberValidatorHelpers'
 import {
   emailValidator,
   passwordValidator,
@@ -37,67 +37,78 @@ const RegisterScreen = () => {
     const emailError = emailValidator(email.value)
     const phoneNumberError = phoneNumberValidator(phoneNumber.value)
     const passwordError = passwordValidator(password.value)
+    let phoneNumberDuplicateError: string
 
-    if (phoneNumberError) {
-      setPhoneNumber({ ...phoneNumber, error: phoneNumberError})
-      alert(phoneNumberError)
-      return
-    }
+    doesPhoneNumberAlreadyExistAsync(phoneNumber.value).then((returnValue) => {
+      if (returnValue == true) {
+        phoneNumberDuplicateError = "This number already exists for another user"
+      } else {
+        phoneNumberDuplicateError = ""
+      }
 
-    if (emailError || passwordError || nameError) {
-      setName({ ...name, error: nameError })
-      setEmail({ ...email, error: emailError })
-      setPassword({ ...password, error: passwordError })
-      return
-    }
-
-    if (password.value !== confirmPassword.value) {
-        alert("Passwords don't match.")
+      if (phoneNumberError) {
+        setPhoneNumber({ ...phoneNumber, error: phoneNumberError})
+        alert(phoneNumberError)
         return
-    }
+      }
 
-    firebase
-        .auth()
-        .createUserWithEmailAndPassword(email.value, password.value)
-        .then((response) => {
-          if (response.user) {
-            const uid = response.user.uid
-            const emailValue = email.value
-            const phoneNumberValue = phoneNumber.value
-            const nameValue = name.value
-            const userData = {
-                id: uid,
-                email: emailValue,
-                phoneNumber: phoneNumberValue,
-                name: nameValue,
-                push_token: "",
-            };
-            const usersRef = firebase.firestore().collection('users')
-            usersRef
-                .doc(uid)
-                .set(userData)
-                .then(() => {
-                    navigation.navigate('Dashboard', userData ) // PASSUSERHERE
-                })
-                .catch((error) => {
-                    alert(error)
-                })
-          }
-        })
-        .catch((error) => {
-            alert(error)
-        });
+      if (phoneNumberDuplicateError) {
+        setPhoneNumber({ ...phoneNumber, error: phoneNumberDuplicateError})
+        alert(phoneNumberDuplicateError)
+        return
+      }
 
-  };
+      if (emailError || passwordError || nameError) {
+        setName({ ...name, error: nameError })
+        setEmail({ ...email, error: emailError })
+        setPassword({ ...password, error: passwordError })
+        return
+      }
+
+      if (password.value !== confirmPassword.value) {
+          alert("Passwords don't match.")
+          return
+      }
+
+      firebase
+          .auth()
+          .createUserWithEmailAndPassword(email.value, password.value)
+          .then((response) => {
+            if (response.user) {
+              const uid = response.user.uid
+              const emailValue = email.value
+              const phoneNumberValue = phoneNumber.value
+              const nameValue = name.value
+              const userData = {
+                  id: uid,
+                  email: emailValue,
+                  phoneNumber: phoneNumberValue,
+                  name: nameValue,
+                  push_token: "",
+              }
+              const usersRef = firebase.firestore().collection('users')
+              usersRef
+                  .doc(uid)
+                  .set(userData)
+                  .then(() => {
+                      navigation.navigate('DashboardTwo', userData ) // PASSUSERHERE
+                  })
+                  .catch((error) => {
+                      alert(error)
+                  })
+            }
+          })
+          .catch((error) => {
+              alert(error)
+          })
+    })
+  }
 
   return (
     <IntroBackground>
       <BackButton goBack={() => navigation.navigate('HomeScreen')} />
-
       <Logo />
-
       <Header>Create Account</Header>
-
       <TextInput
         label="First Name"
         returnKeyType="next"
@@ -149,9 +160,7 @@ const RegisterScreen = () => {
           onChangeFormattedText={text => setPhoneNumber({ value: text, error: '' })}
           withDarkTheme
           withShadow
-          autoFocus
       />
-
       <Button mode="contained" onPress={_onSignUpPressed} style={styles.button}>
         Sign Up
       </Button>

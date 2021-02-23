@@ -1,4 +1,4 @@
-import { DogObject, UserMemberData, DogSchedule, WeeklyNeeds } from './types'
+import { DogObject, UserMemberData, DogSchedule, WeeklyNeeds } from '../types'
 
 class Dog {
   firstName: string
@@ -32,7 +32,7 @@ class Dog {
 }
 
 // Firestore data converter
-export var dogConverter = {
+var dogConverter = {
     toFirestore: function(dog: DogObject) {
         return {
           firstName: dog.firstName,
@@ -46,14 +46,24 @@ export var dogConverter = {
     },
     fromFirestore: function(snapshot, options){
         const data = snapshot.data(options)
+        let dog: any
+        if (data.dog)
+          dog = data.dog
+        else
+          dog = data
+
+        // console.log("data: " + JSON.stringify(data))
+        // console.log(dog.firstName + " " + dog.middleName + " " + dog.lastName + " " + dog.members + " " + dog.schedule+ " " + dog.key + " " + dog.weeklyNeeds)
         return new Dog(
-          data.firstName,
-          data.middleName,
-          data.lastName,
-          data.members,
-          data.schedule,
-          data.key,
-          data.weeklyNeeds,
+          dog.firstName,
+          dog.middleName,
+          dog.lastName,
+          dog.members,
+          dog.schedule,
+          dog.key,
+          dog.weeklyNeeds,
         )
     }
 }
+
+export default dogConverter

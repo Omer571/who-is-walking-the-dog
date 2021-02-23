@@ -1,27 +1,28 @@
 import React, { useState, useRef } from 'react'
 import { StyleSheet, TextInput, View, Keyboard, Alert } from 'react-native'
 import Button from './Button'
-import { firebase } from '../firebase/config'
-import { DogFamilyMember, DogSchedule, DogObject, TempDogObject, Route, UserData, UserMemberData } from '../types'
+import { DogFamilyMember, DogSchedule, TempDogObject, Route, UserData, UserMemberData } from '../types'
 import { useNavigation } from '@react-navigation/native'
-import parsePhoneNumber from 'libphonenumber-js'
 import PhoneInput from "react-native-phone-number-input"
+import { areValidPhoneNumbers, areDuplicateNumbersPresent } from "../helpers/phoneNumberValidatorHelpers"
 import {
   convertTempDogObjectToDogObject,
-  getNonExistingMembers,
-  getOtherExistingUsers,
-  sendPushNotificationToExistingUsers,
+  getUnRegisteredMembers,
+  getOtherRegisteredUsers,
+  sendPushNotificationToUsers,
   sendSMS,
   getPhoneNumbersFromMembers,
   getUsersFromCollection,
-  fromCustomTypeToPureJSObject,
-} from "../AddDogFormTwoHelpers"
+  // fromCustomTypeToPureJSObject,
+  addDogToUserCollectionAsync,
+} from "../helpers/AddDogFormTwoHelpers"
+
 
 const WALKING_DAYS_PER_WEEK = 4
 const OUTING_DAYS_PER_WEEK = 2
 const REST_DAYS_PER_WEEK = 1
-
 const EMPTY_FAMILY_MEMBER = {} as UserData
+
 const defaultDogSchedule: DogSchedule = {
   monday: {
     walker: EMPTY_FAMILY_MEMBER,
@@ -89,6 +90,8 @@ const AddDogFormTwo = (props: Props) => {
   const currentUser = user
 
   const handleSubmit = async (tempDog: TempDogObject) => {
+
+    console.log("(handleSubmit) tempDog members length: " + tempDog.members.length)
     // Make sure the phone number fields are filled
     const petFamilyMembers = tempDog.members
     const petFamilyMemberNumbers: string[] = []
@@ -102,107 +105,64 @@ const AddDogFormTwo = (props: Props) => {
     }
 
     // Validate phone numbers
-    if (areValidPhoneNumbers(petFamilyMemberNumbers)) {
-
-      await getUsersFromCollection().then((users) => {
-
-        let otherUsers = getOtherExistingUsers(tempDog, currentUser, users)
-        let allExistingUsers = otherUsers.concat([currentUser])
-        let nonExistingMembers = getNonExistingMembers(tempDog, currentUser, users)
-
-        console.log("Existing Users: " + JSON.stringify(allExistingUsers))
-        console.log("NonExisting Users: " + JSON.stringify(nonExistingMembers))
-
-        sendPushNotificationToExistingUsers(otherUsers)
-
-        // Prompt to send all SMS to missing members at once
-        if (nonExistingMembers.length > 0) {
-          displayButtonAlert(
-            "Some Members aren't on the App",
-            "The following family member's phone numbers aren't registered with the app. Would you like to send a text?",
-            () => {
-              const smsMessage = "Hello! You've been invited to be " + tempDog.firstName + "'s Family Member but your phone number isn't registered with us. Try signing up first and ask for another invite!"
-              sendSMS(smsMessage, getPhoneNumbersFromMembers(nonExistingMembers))
-            }
-          )
-        }
-
-        let allExistingUsersAsUserMemberData: UserMemberData[] = []
-        let userMemberData = {} as UserMemberData
-        for (let existingUser of allExistingUsers) {
-          userMemberData.todayFinalPushNotificationIdentifier = ""
-          userMemberData.todayPushNotificationIdentifier = ""
-          userMemberData.tomorrowPushNotificationIdentifier = ""
-          userMemberData.id = existingUser.id
-          userMemberData.name = existingUser.name
-          userMemberData.email = existingUser.email
-          userMemberData.phoneNumber = existingUser.phoneNumber
-          userMemberData.push_token = existingUser.push_token
-          allExistingUsersAsUserMemberData.push(userMemberData)
-        }
-        let dogToAddToCollection = convertTempDogObjectToDogObject(tempDog)
-        dogToAddToCollection.members = allExistingUsersAsUserMemberData
-        addDogToUserCollection(allExistingUsers, dogToAddToCollection)
-
-      })
-    } else {
-      displayButtonAlert(
-        "Invalid Phone Number",
-        "Please make sure all phone numbers are correctly entered.",
-        () => {},
-      )
-    }
-  }
-
-  const areValidPhoneNumbers = (numbers: string[]) => {
-    let phoneNumber: any
-    console.log("Processing the numbers: " + numbers)
-    for (let number of numbers) {
-      phoneNumber = parsePhoneNumber(number, 'US')
-      if (!phoneNumber || !phoneNumber.isValid()) {
-        console.log(number + " is not valid")
-        return false
-      }
-      console.log(number + " is valid")
-    }
-    return true
-  }
-
-  const addDogToUserCollection = async (users: UserData[], dog: DogObject) => {
-    // console.log("Before trying to update: " + JSON.stringify(user.dogs))
-    if (!dog.firstName) {
-      console.log("ERROR - Dog does not have first name in updateDogInCollection. \
-      This should have been previously validated in input.")
+    if (!areValidPhoneNumbers(petFamilyMemberNumbers)) {
+      alert("Not all numbers are valid. Please recheck values")
       return
     }
 
-    // Make empty dog doc and get
-    const newDogDoc = firebase.firestore().collection('users').doc(currentUser.id).collection('dogs').doc()
-    const newDogDocRef = await newDogDoc.get()
-    // Now use that id to find and set dog empty doc, now we can set key attribute to it's id
-    for (let user of users) {
-      const dogRef = firebase.firestore().collection('users').doc(user.id).collection('dogs').doc(newDogDocRef.id)
-      dogRef
-        .set({
-            firstName: dog.firstName,
-            middleName: dog.middleName,
-            lastName: dog.lastName,
-            key: newDogDocRef.id,
-            members: fromCustomTypeToPureJSObject(dog.members),
-            schedule: dog.schedule,
-            weeklyNeeds: dog.weeklyNeeds,
-        })
-        .then(() => {
-          dog.key = newDogDocRef.id  // Update local dog copy
-          console.log("User " + user.name + " should now have another dog w/ id/key:" + newDogDocRef.id)
-        })
-        .catch((error) => {
-            alert(error)
-        })
+    // Check for duplicates of current user number
+    if (areDuplicateNumbersPresent(petFamilyMemberNumbers)) {
+      alert("Either you have added yourself or duplicate numbers are present. Please remove duplicates. ")
+      return
     }
+
+
+    const users = await getUsersFromCollection()
+    let otherRegisteredUsers = getOtherRegisteredUsers(tempDog, currentUser, users)
+    let allRegisteredUsers = otherRegisteredUsers.concat([currentUser])
+    let unRegisteredMembers = getUnRegisteredMembers(tempDog, currentUser, users)
+
+    console.log("Existing Users: " + JSON.stringify(allRegisteredUsers))
+    console.log("NonExisting Users: " + JSON.stringify(unRegisteredMembers))
+
+    sendPushNotificationToUsers(otherRegisteredUsers, tempDog.firstName)
+
+    // Prompt to send all SMS to missing members at once
+    if (unRegisteredMembers.length > 0) {
+      displayButtonAlert(
+        "Some Members aren't on the App",
+        "The following family member's phone numbers aren't registered with the app. Would you like to send a text?",
+        () => {
+          const smsMessage = "Hello! You've been invited to be " + tempDog.firstName + "'s Family Member but your phone number isn't registered with us. Try signing up first and ask for another invite!"
+          sendSMS(smsMessage, getPhoneNumbersFromMembers(unRegisteredMembers))
+        }
+      )
+    }
+
+    let allRegisteredUsersAsUserMemberData: UserMemberData[] = []
+
+    for (let registeredUser of allRegisteredUsers) {
+      let userMemberData = {} as UserMemberData // Must be in for loop or old copy of object is pushed (very strange behaiver but fixed with this)
+      userMemberData.todayFinalPushNotificationIdentifier = ""
+      userMemberData.todayPushNotificationIdentifier = ""
+      userMemberData.tomorrowPushNotificationIdentifier = ""
+      userMemberData.id = registeredUser.id
+      userMemberData.name = registeredUser.name
+      userMemberData.email = registeredUser.email
+      userMemberData.phoneNumber = registeredUser.phoneNumber
+      userMemberData.push_token = registeredUser.push_token
+      allRegisteredUsersAsUserMemberData.push(userMemberData)
+    }
+    let dogToAddToCollection = convertTempDogObjectToDogObject(tempDog)
+    dogToAddToCollection.members = allRegisteredUsersAsUserMemberData
+    addDogToUserCollectionAsync(user, allRegisteredUsers, dogToAddToCollection)
+
+    // Navigate Back
     Keyboard.dismiss()
     navigation.goBack()
+
   }
+
 
   const MemberInputBox = (props: { dataKey: string }) => {
     const phoneInput = useRef<PhoneInput>(null)
@@ -217,7 +177,7 @@ const AddDogFormTwo = (props: Props) => {
           placeholder="Family Member Name"
           onChangeText={(newFamilyMemberName) => setDogData(prevDogData => {
             const thisMemberIndex = prevDogData.members.findIndex((member: DogFamilyMember) => member.dataKey === dataKey);
-            prevDogData.members[thisMemberIndex].name = newFamilyMemberName;
+            prevDogData.members[thisMemberIndex].name = newFamilyMemberName
             return {
               ...prevDogData,
             }
@@ -282,8 +242,18 @@ const AddDogFormTwo = (props: Props) => {
   const removeOneMemberInput = () => {
     let tempMemberInputs = memberInputs.slice(0, -1);
     setMemberInputs(tempMemberInputs)
-  };
+    popDogFamilyMember()
+  }
 
+  const popDogFamilyMember = () => {
+    setDogData(prevDogData => {
+      const poppedMember = prevDogData.members.pop()
+      console.log("Member input removed --> popped family member: " + poppedMember)
+      return {
+        ...prevDogData,
+      }
+    })
+  }
 
   const { numberOfFamilyBoxes } = props
 
