@@ -54,7 +54,7 @@ const LoginScreen = ({}: Props) => {
                     console.log("User Remembered for next time: " + uid)
                   })
 
-                  navigation.navigate('DashboardTwo', {
+                  navigation.navigate('Dashboard', {
                     user: user,
                   })
               })

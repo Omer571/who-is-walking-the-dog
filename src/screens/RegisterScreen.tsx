@@ -91,7 +91,7 @@ const RegisterScreen = () => {
                   .doc(uid)
                   .set(userData)
                   .then(() => {
-                      navigation.navigate('DashboardTwo', userData ) // PASSUSERHERE
+                      navigation.navigate('Dashboard', userData ) // PASSUSERHERE
                   })
                   .catch((error) => {
                       alert(error)

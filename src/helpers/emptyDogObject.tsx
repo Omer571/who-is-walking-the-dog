@@ -1,51 +1,34 @@
-import { DogSchedule, DogObject } from '../types'
+import { DogSchedule, DogData, DayInfo, UserData } from '../types'
 
-const defaultDogSchedule: DogSchedule = {
-  monday: {
-    walkerName: "",
-    time: "",
-    dayType: "",
-  },
-  tuesday: {
-    walkerName: "",
-    time: "",
-    dayType: "",
-  },
-  wednesday: {
-    walkerName: "",
-    time: "",
-    dayType: "",
-  },
-  thursday: {
-    walkerName: "",
-    time: "",
-    dayType: "",
-  },
-  friday: {
-    walkerName: "",
-    time: "",
-    dayType: "",
-  },
-  saturday: {
-    walkerName: "",
-    time: "",
-    dayType: "",
-  },
-  sunday: {
-    walkerName: "",
-    time: "",
-    dayType: "",
-  },
+const defaultDayInfo: DayInfo = {
+  walkerId: "",
+  time: "06:15:00 PM",
+  dayType: "",
 }
 
-const emptyDogObject: DogObject = {
+const defaultDogSchedule: DogSchedule = {
+  monday: defaultDayInfo,
+  tuesday: defaultDayInfo,
+  wednesday: defaultDayInfo,
+  thursday: defaultDayInfo,
+  friday: defaultDayInfo,
+  saturday: defaultDayInfo,
+  sunday: defaultDayInfo,
+}
+
+const emptyDogObject: DogData = {
   firstName: "",
   middleName: "",
   lastName: "",
-  members: [{dataKey: '-1', phoneNumber: "", name: "Jimmy"}, {dataKey: '-2', phoneNumber: "", name: "Leeah"}],
+  userIds: ["-1", "-2"],
   schedule: defaultDogSchedule,
-  key: '-9999',
+  id: '-9999',
   weeklyNeeds: {
+    walks: 3,
+    outings: 3,
+    rest: 1,
+  },
+  thisWeeksNeeds: {
     walks: 3,
     outings: 3,
     rest: 1,

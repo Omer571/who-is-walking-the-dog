@@ -1,18 +1,20 @@
 import React, { useState, useRef } from 'react'
-import { StyleSheet, TextInput, View, Keyboard, Alert } from 'react-native'
+import { StyleSheet, TextInput, View, Keyboard  } from 'react-native'
 import Button from './Button'
-import { DogFamilyMember, DogSchedule, TempDogObject, Route, UserData, UserMemberData } from '../types'
+import { PotentialDogFamilyMember, DogSchedule, TempDogObject, Route, UserData, UserMemberData } from '../types'
 import { useNavigation } from '@react-navigation/native'
 import PhoneInput from "react-native-phone-number-input"
 import { areValidPhoneNumbers, areDuplicateNumbersPresent } from "../helpers/phoneNumberValidatorHelpers"
+import { getAllUsersAsync } from '../firebase/User'
+
 import {
+  displayButtonAlert,
   convertTempDogObjectToDogObject,
   getUnRegisteredMembers,
   getOtherRegisteredUsers,
   sendPushNotificationToUsers,
   sendSMS,
   getPhoneNumbersFromMembers,
-  getUsersFromCollection,
   // fromCustomTypeToPureJSObject,
   addDogToUserCollectionAsync,
 } from "../helpers/AddDogFormTwoHelpers"
@@ -25,37 +27,37 @@ const EMPTY_FAMILY_MEMBER = {} as UserData
 
 const defaultDogSchedule: DogSchedule = {
   monday: {
-    walker: EMPTY_FAMILY_MEMBER,
+    walkerId: "",
     time: "06:15:00 PM",
     dayType: "",
   },
   tuesday: {
-    walker: EMPTY_FAMILY_MEMBER,
+    walkerId: "",
     time: "06:15:00 PM",
     dayType: "",
   },
   wednesday: {
-    walker: EMPTY_FAMILY_MEMBER,
+    walkerId: "",
     time: "06:15:00 PM",
     dayType: "",
   },
   thursday: {
-    walker: EMPTY_FAMILY_MEMBER,
+    walkerId: "",
     time: "06:15:00 PM",
     dayType: "",
   },
   friday: {
-    walker: EMPTY_FAMILY_MEMBER,
+    walkerId: "",
     time: "06:15:00 PM",
     dayType: "",
   },
   saturday: {
-    walker: EMPTY_FAMILY_MEMBER,
+    walkerId: "",
     time: "06:15:00 PM",
     dayType: "",
   },
   sunday: {
-    walker: EMPTY_FAMILY_MEMBER,
+    walkerId: "",
     time: "06:15:00 PM",
     dayType: "",
   },
@@ -66,23 +68,6 @@ type Props = {
   user: Route["params"]["user"],
 }
 
-const displayButtonAlert = (title: string, message: string, onPressFunction: () => void) => {
-  return Alert.alert(
-      title,
-      message,
-      [
-        {
-          text: "Cancel",
-          onPress: () => console.log("Cancel Pressed"),
-          style: "cancel"
-        },
-        { text: "OK", onPress: () => onPressFunction() }
-      ],
-      { cancelable: true }
-    )
-}
-
-
 
 const AddDogFormTwo = (props: Props) => {
   const navigation = useNavigation()
@@ -91,7 +76,8 @@ const AddDogFormTwo = (props: Props) => {
 
   const handleSubmit = async (tempDog: TempDogObject) => {
 
-    console.log("(handleSubmit) tempDog members length: " + tempDog.members.length)
+    // console.log("(handleSubmit) tempDog members length: " + tempDog.members.length)
+
     // Make sure the phone number fields are filled
     const petFamilyMembers = tempDog.members
     const petFamilyMemberNumbers: string[] = []
@@ -117,8 +103,9 @@ const AddDogFormTwo = (props: Props) => {
     }
 
 
-    const users = await getUsersFromCollection()
-    let otherRegisteredUsers = getOtherRegisteredUsers(tempDog, currentUser, users)
+    const users = await getAllUsersAsync()
+
+    let otherRegisteredUsers = getOtherRegisteredUsers(tempDog, currentUser, users) // all users other than current
     let allRegisteredUsers = otherRegisteredUsers.concat([currentUser])
     let unRegisteredMembers = getUnRegisteredMembers(tempDog, currentUser, users)
 
@@ -139,22 +126,24 @@ const AddDogFormTwo = (props: Props) => {
       )
     }
 
-    let allRegisteredUsersAsUserMemberData: UserMemberData[] = []
+    let allRegisteredUserIds: string[] = []
 
     for (let registeredUser of allRegisteredUsers) {
-      let userMemberData = {} as UserMemberData // Must be in for loop or old copy of object is pushed (very strange behaiver but fixed with this)
-      userMemberData.todayFinalPushNotificationIdentifier = ""
-      userMemberData.todayPushNotificationIdentifier = ""
-      userMemberData.tomorrowPushNotificationIdentifier = ""
-      userMemberData.id = registeredUser.id
-      userMemberData.name = registeredUser.name
-      userMemberData.email = registeredUser.email
-      userMemberData.phoneNumber = registeredUser.phoneNumber
-      userMemberData.push_token = registeredUser.push_token
-      allRegisteredUsersAsUserMemberData.push(userMemberData)
+      allRegisteredUserIds.push(registeredUser.id)
     }
+
     let dogToAddToCollection = convertTempDogObjectToDogObject(tempDog)
-    dogToAddToCollection.members = allRegisteredUsersAsUserMemberData
+
+
+    // Dog needs userIds
+    dogToAddToCollection.userIds = allRegisteredUserIds
+
+    // Dog needs id (handle after creating dog, but need way to get id)
+
+    // Users needs dogIds
+
+    // function deleted, need new one the add dog and return dog id
+    // After, as stated above, users need dogs id as well and dog needs dog id
     addDogToUserCollectionAsync(user, allRegisteredUsers, dogToAddToCollection)
 
     // Navigate Back

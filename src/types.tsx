@@ -1,10 +1,20 @@
 export type Route = {
   params: {
     dogName: string,
-    dog: DogObject,
+    dog: DogData,
     user: UserData,
   },
 }
+
+export type DropdownStateType = {
+    monday: string,
+    tuesday: string,
+    wednesday: string,
+    thursday: string,
+    friday: string,
+    saturday: string,
+    sunday: string,
+  }
 
 export type Navigation = {
   navigate: (scene: string) => void;
@@ -15,30 +25,31 @@ export type UserData = {
   email: string,
   name: string,
   phoneNumber: string,
-  dogs: DogObject[],
+  dogIds: string[],
   push_token: string,
+  notificationsOn: boolean,
 }
 
-export type UserMemberData = {
-  id: string,
-  email: string,
-  name: string,
-  phoneNumber: string,
-  dogs: DogObject[],
-  push_token: string,
-  todayPushNotificationIdentifier: string,
-  todayFinalPushNotificationIdentifier: string,
-  tomorrowPushNotificationIdentifier: string,
-}
+// export type UserMemberData = {
+//   id: string,
+//   email: string,
+//   name: string,
+//   phoneNumber: string,
+//   dogs: string[],
+//   push_token: string,
+//   todayPushNotificationIdentifier: string,
+//   todayFinalPushNotificationIdentifier: string,
+//   tomorrowPushNotificationIdentifier: string,
+// }
 
-export type DogFamilyMember = {
+export type PotentialDogFamilyMember = {
   dataKey: string,
   phoneNumber: string,
   name: string,
 }
 
 export type DayInfo = {
-  walker: UserData,
+  walkerId: string,
   time: string,
   dayType: string,
 }
@@ -59,22 +70,22 @@ export type WeeklyNeeds = {
   rest: number,
 }
 
-export type DogObject = {
+export type DogData = {
   firstName: string,
   middleName: string,
   lastName: string,
-  members: Array<UserMemberData>,
+  userIds: string[],
   schedule: DogSchedule,
-  key: string,
+  id: string,
   weeklyNeeds: WeeklyNeeds,
+  thisWeeksNeeds: WeeklyNeeds,
 }
 
 export type TempDogObject = {
   firstName: string,
   middleName: string,
   lastName: string,
-  members: Array<DogFamilyMember>,
-  schedule: DogSchedule,
-  key: string,
+  members: Array<PotentialDogFamilyMember>,
+  id: string,
   weeklyNeeds: WeeklyNeeds,
 }

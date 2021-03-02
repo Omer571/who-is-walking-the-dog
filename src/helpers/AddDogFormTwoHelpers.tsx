@@ -1,40 +1,25 @@
-import { DogObject, TempDogObject, DogFamilyMember, UserData } from '../types'
-import { firebase } from '../firebase/config'
+import { Alert } from 'react-native'
+import { DogData, TempDogObject, PotentialDogFamilyMember, UserData } from '../types'
+import emptyDogObject from './emptyDogObject'
+
+import {  } from '../firebase/Dog'
 import * as SMS from 'expo-sms'
-import userConverter from './userConverter'
 
-export const addDogToUserCollectionAsync = async (currentUser: UserData, users: UserData[], dog: DogObject) => {
-  // console.log("Before trying to update: " + JSON.stringify(user.dogs))
-  if (!dog.firstName) {
-    console.log("ERROR - Dog does not have first name in updateDogInCollection. \
-    This should have been previously validated in input.")
-    return
-  }
 
-  // Make empty dog doc and get
-  const newDogDoc = firebase.firestore().collection('users').doc(currentUser.id).collection('dogs').doc()
-  const newDogDocRef = await newDogDoc.get()
-  // Now use that id to find and set dog empty doc, now we can set key attribute to it's id
-  for (let user of users) {
-    const dogRef = firebase.firestore().collection('users').doc(user.id).collection('dogs').doc(newDogDocRef.id)
-    dogRef
-      .set({
-          firstName: dog.firstName,
-          middleName: dog.middleName,
-          lastName: dog.lastName,
-          key: newDogDocRef.id,
-          members: fromCustomTypeToPureJSObject(dog.members),
-          schedule: dog.schedule,
-          weeklyNeeds: dog.weeklyNeeds,
-      })
-      .then(() => {
-        dog.key = newDogDocRef.id  // Update local dog copy
-        console.log("User " + user.name + " should now have another dog w/ id/key:" + newDogDocRef.id)
-      })
-      .catch((error) => {
-          alert(error)
-      })
-  }
+export const displayButtonAlert = (title: string, message: string, onPressFunction: () => void) => {
+  return Alert.alert(
+      title,
+      message,
+      [
+        {
+          text: "Cancel",
+          onPress: () => console.log("Cancel Pressed"),
+          style: "cancel"
+        },
+        { text: "OK", onPress: () => onPressFunction() }
+      ],
+      { cancelable: true }
+    )
 }
 
 export const getUnRegisteredMembers = (
@@ -43,7 +28,7 @@ export const getUnRegisteredMembers = (
   users: UserData[],
 ) => {
 
-  const nonRegisteredMembers: DogFamilyMember[] = []
+  const nonRegisteredMembers: PotentialDogFamilyMember[] = []
 
   let petFamilyMembers = dog.members
   for (let member of petFamilyMembers) {
@@ -93,7 +78,7 @@ export const sendPushNotification = (receiverToken: string ,title: string, messa
   })
 }
 
-export const isMemberInCollection = (member: DogFamilyMember, users: UserData[]) => {
+export const isMemberInCollection = (member: PotentialDogFamilyMember, users: UserData[]) => {
 
   if (!users) {
     throw "ERROR - No Users in Collection (even current user)"
@@ -108,22 +93,8 @@ export const isMemberInCollection = (member: DogFamilyMember, users: UserData[])
 
 }
 
-export const getUsersFromCollection = async () => {
-  const users: UserData[] = []
-  var userRef = firebase.firestore().collection("users").withConverter(userConverter)
-  await userRef.get().then((docs) => {
-    docs.forEach((doc) => {
-      let user = doc.data()
-      users.push(user)
-      // console.log("Pushed user: " + JSON.stringify(user))
-    })
-  })
 
-  return users
-
-}
-
-export const getPhoneNumbersFromMembers = (members: DogFamilyMember[]) => {
+export const getPhoneNumbersFromMembers = (members: PotentialDogFamilyMember[]) => {
   const phoneNumbers: string[] = []
   for (let member of members) {
     phoneNumbers.push(member.phoneNumber)
@@ -170,13 +141,14 @@ export const sendPushNotificationToUsers = (existingUsers: UserData[], dogName: 
 }
 
 export const convertTempDogObjectToDogObject = (tempDog: TempDogObject) => {
-  let dogObject = {} as DogObject
+  let dogObject = {} as DogData
   dogObject.firstName = tempDog.firstName
   dogObject.middleName = tempDog.middleName
   dogObject.lastName = tempDog.lastName
-  dogObject.key = ""
-  dogObject.members = []
-  dogObject.schedule = tempDog.schedule
+  dogObject.id = ""
+  dogObject.userIds = []
+  dogObject.schedule = emptyDogObject.schedule
+  dogObject.weeklyNeeds = tempDog.weeklyNeeds
   dogObject.weeklyNeeds = tempDog.weeklyNeeds
 
   return dogObject

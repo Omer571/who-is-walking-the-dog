@@ -14,8 +14,8 @@ import SettingsDialogPassword from '../components/SettingsDialogPassword'
 import {
   saveEmailToUserCollection,
   savePhoneNumberToUserCollection,
-  saveNameToUserCollection,
-  deleteAccountFromUserCollection,
+  handleUserNameChange,
+  handleDeleteAccount,
   reauthenticateUser,
 } from '../helpers/SettingsHelpers'
 import { firebase } from '../firebase/config'
@@ -76,7 +76,7 @@ const Settings = ({ route, navigation }: Props) => {
 
 	return (
 		<View style={{backgroundColor:'#EFEFF4',flex:1}}>
-      <NavBar user={user} title={"Settings"} goBack={() => navigation.navigate('DashboardTwo')} />
+      <NavBar user={user} title={"Settings"} goBack={() => navigation.navigate('Dashboard')} />
       <View style={{backgroundColor:'#EFEFF4',flex:1,marginTop:25}}>
 				<DogList navigation={navigation} user={user} />
         <SettingsList borderColor='#c8c7cc' defaultItemSize={50}>
@@ -134,7 +134,7 @@ const Settings = ({ route, navigation }: Props) => {
         </SettingsList>
 				<SettingsDialogEmail user={user} userFromAuth={userFromAuth} showDialog={emailDialog} onSubmit={saveEmailToUserCollection} closeAllDialogs={closeAllDialogs}/>
         <SettingsDialogPhoneNumber user={user} showDialog={numberDialog} onSubmit={savePhoneNumberToUserCollection} closeAllDialogs={closeAllDialogs}/>
-        <SettingsDialogName user={user} showDialog={nameDialog} onSubmit={saveNameToUserCollection} closeAllDialogs={closeAllDialogs}/>
+        <SettingsDialogName user={user} showDialog={nameDialog} onSubmit={handleUserNameChange} closeAllDialogs={closeAllDialogs}/>
         <SettingsDialogPassword showDialog={passwordDialog} onPasswordSubmit={handleReauthentication} closeAllDialogs={closeAllDialogs}></SettingsDialogPassword>
         <SettingsDialogDeleteAccount user={user} userFromAuth={userFromAuth} showDialog={deleteAccountDialog} onDeleteConfirmed={deleteAccountFromUserCollection} closeAllDialogs={closeAllDialogs}/>
       </View>

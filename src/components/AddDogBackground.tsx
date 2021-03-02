@@ -20,7 +20,7 @@ const AddDogBackground = ({ children, user, navigation }: Props) => (
     resizeMode="repeat"
     style={styles.background}
   >
-    <NavBar user={user} title={"Add Dog Form"} goBack={() => navigation.navigate('DashboardTwo')} />
+    <NavBar user={user} title={"Add Dog Form"} goBack={() => navigation.navigate('Dashboard')} />
     <ScrollView>
       <KeyboardAvoidingView style={styles.container} behavior="padding">
           {children}

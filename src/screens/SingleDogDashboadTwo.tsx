@@ -51,6 +51,7 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
 
         clearDogScheduleInCollection(dog, user.id)?.then(dogWithClearedSchedule => {
           if (dogWithClearedSchedule) {
+            dog = dogWithClearedSchedule
             console.log("dogWithClearedSchedule.weeklyNeeds.walks: " + dogWithClearedSchedule.weeklyNeeds.walks)
             setDogHook(dogWithClearedSchedule)
 
@@ -78,38 +79,37 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
 
   const [nameDropdown, setNameDropdown] = useState<DropdownStateType>({
     // If the dog doesn't already have walker for given day, user is default option
-    monday: (dogHook.schedule.monday.walker.name ? dogHook.schedule.monday.walker.name : currentUser.name),
-    tuesday: (dogHook.schedule.tuesday.walker.name ? dogHook.schedule.tuesday.walker.name : currentUser.name),
-    wednesday: (dogHook.schedule.wednesday.walker.name ? dogHook.schedule.wednesday.walker.name : currentUser.name),
-    thursday: (dogHook.schedule.thursday.walker.name ? dogHook.schedule.thursday.walker.name : currentUser.name),
-    friday: (dogHook.schedule.friday.walker.name ? dogHook.schedule.friday.walker.name : currentUser.name),
-    saturday: (dogHook.schedule.saturday.walker.name ? dogHook.schedule.saturday.walker.name : currentUser.name),
-    sunday: (dogHook.schedule.sunday.walker.name ? dogHook.schedule.sunday.walker.name : currentUser.name),
+    monday: (dog.schedule.monday.walker.name ? dog.schedule.monday.walker.name : currentUser.name),
+    tuesday: (dog.schedule.tuesday.walker.name ? dog.schedule.tuesday.walker.name : currentUser.name),
+    wednesday: (dog.schedule.wednesday.walker.name ? dog.schedule.wednesday.walker.name : currentUser.name),
+    thursday: (dog.schedule.thursday.walker.name ? dog.schedule.thursday.walker.name : currentUser.name),
+    friday: (dog.schedule.friday.walker.name ? dog.schedule.friday.walker.name : currentUser.name),
+    saturday: (dog.schedule.saturday.walker.name ? dog.schedule.saturday.walker.name : currentUser.name),
+    sunday: (dog.schedule.sunday.walker.name ? dog.schedule.sunday.walker.name : currentUser.name),
   })
 
   const [dayTypeDropdown, setDayTypeDropdown] = useState<DropdownStateType>({
-    monday: (dogHook.schedule.monday.dayType ? dogHook.schedule.monday.dayType : "Walk"),
-    tuesday: (dogHook.schedule.tuesday.dayType ? dogHook.schedule.tuesday.dayType : "Walk"),
-    wednesday: (dogHook.schedule.wednesday.dayType ? dogHook.schedule.wednesday.dayType : "Walk"),
-    thursday: (dogHook.schedule.thursday.dayType ? dogHook.schedule.thursday.dayType : "Walk"),
-    friday: (dogHook.schedule.friday.dayType ? dogHook.schedule.friday.dayType : "Walk"),
-    saturday: (dogHook.schedule.saturday.dayType ? dogHook.schedule.saturday.dayType : "Walk"),
-    sunday: (dogHook.schedule.sunday.dayType ? dogHook.schedule.sunday.dayType : "Walk"),
+    monday: (dog.schedule.monday.dayType ? dog.schedule.monday.dayType : "Walk"),
+    tuesday: (dog.schedule.tuesday.dayType ? dog.schedule.tuesday.dayType : "Walk"),
+    wednesday: (dog.schedule.wednesday.dayType ? dog.schedule.wednesday.dayType : "Walk"),
+    thursday: (dog.schedule.thursday.dayType ? dog.schedule.thursday.dayType : "Walk"),
+    friday: (dog.schedule.friday.dayType ? dog.schedule.friday.dayType : "Walk"),
+    saturday: (dog.schedule.saturday.dayType ? dog.schedule.saturday.dayType : "Walk"),
+    sunday: (dog.schedule.sunday.dayType ? dog.schedule.sunday.dayType : "Walk"),
   })
 
   const [timesDropdown, setTimesDropdown] = useState<DropdownStateType>({
-    monday: (dogHook.schedule.monday.time ? dogHook.schedule.monday.time : "6:15:00 PM"),
-    tuesday: (dogHook.schedule.tuesday.time ? dogHook.schedule.tuesday.time : "6:15:00 PM"),
-    wednesday: (dogHook.schedule.wednesday.time ? dogHook.schedule.wednesday.time : "6:15:00 PM"),
-    thursday: (dogHook.schedule.thursday.time ? dogHook.schedule.thursday.time : "6:15:00 PM"),
-    friday: (dogHook.schedule.friday.time ? dogHook.schedule.friday.time : "6:15:00 PM"),
-    saturday: (dogHook.schedule.saturday.time ? dogHook.schedule.saturday.time : "6:15:00 PM"),
-    sunday: (dogHook.schedule.sunday.time ? dogHook.schedule.sunday.time : "6:15:00 PM"),
+    monday: (dog.schedule.monday.time ? dog.schedule.monday.time : "6:15:00 PM"),
+    tuesday: (dog.schedule.tuesday.time ? dog.schedule.tuesday.time : "6:15:00 PM"),
+    wednesday: (dog.schedule.wednesday.time ? dog.schedule.wednesday.time : "6:15:00 PM"),
+    thursday: (dog.schedule.thursday.time ? dog.schedule.thursday.time : "6:15:00 PM"),
+    friday: (dog.schedule.friday.time ? dog.schedule.friday.time : "6:15:00 PM"),
+    saturday: (dog.schedule.saturday.time ? dog.schedule.saturday.time : "6:15:00 PM"),
+    sunday: (dog.schedule.sunday.time ? dog.schedule.sunday.time : "6:15:00 PM"),
   })
 
 
-  useEffect(() => {
-    let mounted = true
+  useEffect( () => {
     console.log("Use Effect Called")
     // Get Current Updated User with id
     getUser(user.id).then(updatedUser => {
@@ -123,6 +123,7 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
     getDog(user.id, dogHook.key).then(updatedDog => {
       if (updatedDog) {
         setDogHook(updatedDog)
+        dog = updatedDog
         console.log("dog.weeklyNeeds.walks: " + dog.weeklyNeeds.walks)
       } else {
         console.log("Didn't get dog")
@@ -133,13 +134,11 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
       //   console.log(member.name)
       // }
     })
-
-    mounted = false
   }, [refresh] )
 
 
   const clearDogDaySchedule = (day: string) => {
-    let dayData = getDayData(dogHook, day)
+    let dayData = getDayData(dog, day)
     const previousDayType = dayData.dayType
 
     dayData.walker.name = ""
@@ -148,30 +147,20 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
     // Update Weekly Needs back
     switch (previousDayType) {
       case "Walk":
-        setDogHook(prevValue => {
-          prevValue.weeklyNeeds.walks = prevValue.weeklyNeeds.walks + 1
-          return prevValue
-        })
-        dogHook.weeklyNeeds.walks = dog.weeklyNeeds.walks + 1
+        dog.weeklyNeeds.walks = dog.weeklyNeeds.walks + 1
         break
       case "Outing":
-        setDogHook(prevValue => {
-          prevValue.weeklyNeeds.outings = prevValue.weeklyNeeds.outings + 1
-          return prevValue
-        })
+        dog.weeklyNeeds.outings = dog.weeklyNeeds.outings + 1
         break
       case "Rest":
-        setDogHook(prevValue => {
-          prevValue.weeklyNeeds.rest = prevValue.weeklyNeeds.rest + 1
-          return prevValue
-        })
+        dog.weeklyNeeds.rest = dog.weeklyNeeds.rest + 1
         break
     }
   }
 
   const findMemberByName = (name: string) => {
     let dogMemberNames: string[] = []
-    for (let member of dogHook.members) {
+    for (let member of dog.members) {
       dogMemberNames.push(member.name)
       if (member.name === name) {
         return member
@@ -193,82 +182,54 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
 
     switch (day.toUpperCase()) {
       case "MONDAY":
-        setDogHook(prevValue => {
-          prevValue.schedule.monday.dayType = dayTypeDropdown.monday
-          prevValue.schedule.monday.time = timesDropdown.monday
-          nameToSearchFor = nameDropdown.monday.replace(" (You)", "")
-          prevValue.schedule.monday.walker = findMemberByName(nameToSearchFor)
-          return prevValue
-        })
-
+        dog.schedule.monday.dayType = dayTypeDropdown.monday
         dayType = dayTypeDropdown.monday
+        dog.schedule.monday.time = timesDropdown.monday
         console.log("nameDropdown.monday (updateDogSchedule): " + nameDropdown.monday)
+        nameToSearchFor = nameDropdown.monday.replace(" (You)", "")
+        dog.schedule.monday.walker = findMemberByName(nameToSearchFor)
         break
       case "TUESDAY":
-        setDogHook(prevValue => {
-          prevValue.schedule.tuesday.dayType = dayTypeDropdown.tuesday
-          prevValue.schedule.tuesday.time = timesDropdown.tuesday
-          nameToSearchFor = nameDropdown.tuesday.replace(" (You)", "")
-          prevValue.schedule.tuesday.walker = findMemberByName(nameToSearchFor)
-          return prevValue
-        })
-
+        dog.schedule.tuesday.dayType = dayTypeDropdown.tuesday
         dayType = dayTypeDropdown.tuesday
+        dog.schedule.tuesday.time = timesDropdown.tuesday
+        nameToSearchFor = nameDropdown.tuesday.replace(" (You)", "")
+        dog.schedule.tuesday.walker = findMemberByName(nameToSearchFor)
         break
       case "WEDNESDAY":
-        setDogHook(prevValue => {
-          prevValue.schedule.wednesday.dayType = dayTypeDropdown.wednesday
-          prevValue.schedule.wednesday.time = timesDropdown.wednesday
-          nameToSearchFor = nameDropdown.wednesday.replace(" (You)", "")
-          prevValue.schedule.wednesday.walker = findMemberByName(nameToSearchFor)
-          return prevValue
-        })
-
+        dog.schedule.wednesday.dayType = dayTypeDropdown.wednesday
         dayType = dayTypeDropdown.wednesday
+        dog.schedule.wednesday.time = timesDropdown.wednesday
+        nameToSearchFor = nameDropdown.wednesday.replace(" (You)", "")
+        dog.schedule.wednesday.walker = findMemberByName(nameToSearchFor)
         break
       case "THURSDAY":
-        setDogHook(prevValue => {
-          prevValue.schedule.thursday.dayType = dayTypeDropdown.thursday
-          prevValue.schedule.thursday.time = timesDropdown.thursday
-          nameToSearchFor = nameDropdown.thursday.replace(" (You)", "")
-          prevValue.schedule.thursday.walker = findMemberByName(nameToSearchFor)
-          return prevValue
-        })
-
+        dog.schedule.thursday.dayType = dayTypeDropdown.thursday
         dayType = dayTypeDropdown.thursday
+        dog.schedule.thursday.time = timesDropdown.thursday
+        nameToSearchFor = nameDropdown.thursday.replace(" (You)", "")
+        dog.schedule.thursday.walker = findMemberByName(nameToSearchFor)
         break
       case "FRIDAY":
-        setDogHook(prevValue => {
-          prevValue.schedule.friday.dayType = dayTypeDropdown.friday
-          prevValue.schedule.friday.time = timesDropdown.friday
-          nameToSearchFor = nameDropdown.friday.replace(" (You)", "")
-          prevValue.schedule.friday.walker = findMemberByName(nameToSearchFor)
-          return prevValue
-        })
-
+        dog.schedule.friday.dayType = dayTypeDropdown.friday
         dayType = dayTypeDropdown.friday
+        dog.schedule.friday.time = timesDropdown.friday
+        nameToSearchFor = nameDropdown.friday.replace(" (You)", "")
+        dog.schedule.friday.walker = findMemberByName(nameToSearchFor)
         break
       case "SATURDAY":
-        setDogHook(prevValue => {
-          prevValue.schedule.saturday.dayType = dayTypeDropdown.saturday
-          prevValue.schedule.saturday.time = timesDropdown.saturday
-          nameToSearchFor = nameDropdown.saturday.replace(" (You)", "")
-          prevValue.schedule.saturday.walker = findMemberByName(nameToSearchFor)
-          return prevValue
-        })
-
+        dog.schedule.saturday.dayType = dayTypeDropdown.saturday
         dayType = dayTypeDropdown.saturday
+        dog.schedule.saturday.time = timesDropdown.saturday
+        nameToSearchFor = nameDropdown.saturday.replace(" (You)", "")
+        dog.schedule.saturday.walker = findMemberByName(nameToSearchFor)
         break
       case "SUNDAY":
-        setDogHook(prevValue => {
-          prevValue.schedule.sunday.dayType = dayTypeDropdown.sunday
-          prevValue.schedule.sunday.time = timesDropdown.sunday
-          nameToSearchFor = nameDropdown.sunday.replace(" (You)", "")
-          prevValue.schedule.sunday.walker = findMemberByName(nameToSearchFor)
-          return prevValue
-        })
-
+        dog.schedule.sunday.dayType = dayTypeDropdown.sunday
         dayType = dayTypeDropdown.sunday
+        dog.schedule.sunday.time = timesDropdown.sunday
+        nameToSearchFor = nameDropdown.sunday.replace(" (You)", "")
+        dog.schedule.sunday.walker = findMemberByName(nameToSearchFor)
         break
       default:
         console.log("SingleDogDashboard ERROR - Something has gone very wrong in updateDog. The day passed does not match a day Monday-Sunday.")
@@ -284,55 +245,36 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
       if (!isSameDayType) {
         switch (dayType) {
           case "Walk":
-            setDogHook(prevValue => {
-              prevValue.weeklyNeeds.walks = prevValue.weeklyNeeds.walks - 1
-              return prevValue
-            })
+            dog.weeklyNeeds.walks = dog.weeklyNeeds.walks - 1
             break
           case "Outing":
-            setDogHook(prevValue => {
-              prevValue.weeklyNeeds.outings = prevValue.weeklyNeeds.outings - 1
-              return prevValue
-            })
+            dog.weeklyNeeds.outings = dog.weeklyNeeds.outings - 1
             break
           case "Rest":
-            setDogHook(prevValue => {
-              prevValue.weeklyNeeds.rest = prevValue.weeklyNeeds.rest - 1
-              return prevValue
-            })
+            dog.weeklyNeeds.rest = dog.weeklyNeeds.rest - 1
             break
         }
       }
-
       // If the dayTypes were different, then we need to add back to previousDayTypes weeklyNeeds
       if (isNewDayType) {
         switch (previousDayType) {
           case "Walk":
-            setDogHook(prevValue => {
-              prevValue.weeklyNeeds.walks = prevValue.weeklyNeeds.walks + 1
-              return prevValue
-            })
+            dog.weeklyNeeds.walks = dog.weeklyNeeds.walks + 1
             break
           case "Outing":
-            setDogHook(prevValue => {
-              prevValue.weeklyNeeds.outings = prevValue.weeklyNeeds.outings + 1
-              return prevValue
-            })
+            dog.weeklyNeeds.outings = dog.weeklyNeeds.outings + 1
             break
           case "Rest":
-            setDogHook(prevValue => {
-              prevValue.weeklyNeeds.rest = prevValue.weeklyNeeds.rest + 1
-              return prevValue
-            })
+            dog.weeklyNeeds.rest = dog.weeklyNeeds.rest + 1
             break
         }
       }
     }
 
     // Check if day reserved messed things up
-    if (dogHook.weeklyNeeds.walks < 0 || dogHook.weeklyNeeds.outings < 0 || dogHook.weeklyNeeds.rest < 0) {
+    if (dog.weeklyNeeds.walks < 0 || dog.weeklyNeeds.outings < 0 || dog.weeklyNeeds.rest < 0) {
 
-      console.log("(updateDogSchedule) dog.weeklyNeeds.walks: " + dogHook.weeklyNeeds.walks)
+      console.log("(updateDogSchedule) dog.weeklyNeeds.walks: " + dog.weeklyNeeds.walks)
       displayButtonAlert(
         "Hold Up",
         dayType + " days for this week have already been fulfilled. Please choose different type of day.",
@@ -340,11 +282,8 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
       )
 
       // Restore previous dog
-      setDogHook(prevValue => {
-        prevValue.schedule = previousDogBackup.schedule
-        prevValue.weeklyNeeds = previousDogBackup.weeklyNeeds
-        return prevValue
-      })
+      dog.schedule = previousDogBackup.schedule
+      dog.weeklyNeeds = previousDogBackup.weeklyNeeds
 
       return false
     }
@@ -355,19 +294,19 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
 
   const updateDogInUserCollections = () => {
     // If dog doesn't have a firstName it must be the example dog since firstName entry enforced
-    if (!dogHook.firstName) {
+    if (!dog.firstName) {
       alert("Can't mess with the example dog silly! ")
     } else {
-      for (let user of dogHook.members) {
-        console.log("Updating dog's schedule with key of: " + dogHook.key + " for user: " + user.name)
-        const dogRef = firebase.firestore().collection('users').doc(user.id).collection('dogs').doc(dogHook.key)
+      for (let user of dog.members) {
+        console.log("Updating dog's schedule with key of: " + dog.key + " for user: " + user.name)
+        const dogRef = firebase.firestore().collection('users').doc(user.id).collection('dogs').doc(dog.key)
         dogRef
           .update({
-              schedule: dogHook.schedule,
-              weeklyNeeds: dogHook.weeklyNeeds,
+              schedule: dog.schedule,
+              weeklyNeeds: dog.weeklyNeeds,
           })
           .then(_doc => {
-              console.log("Updated Dogs schedule and weeklyNeeds successfully")
+              setDogHook(makeDogObjectCopy(dog))
           })
           .catch((error) => {
               throw "error in updateDogInUserCollections: " + error
@@ -381,7 +320,7 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
     let updateSuccess = updateDogSchedule(day, previousReserveDay)
 
     if (updateSuccess) {
-      const dogDayData = getDayData(dogHook, day)
+      const dogDayData = getDayData(dog, day)
       displayButtonAlert(
         "Reserve Day",
         "You are reserving " + day + " as a " + dogDayData.dayType + " day for " + dogDayData.time,
@@ -437,12 +376,8 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
   const EditableDayInput = (day: string) => {
 
     let memberNames: string[] = []
-    let [defaultOption, setDefaultOption] = useState(currentUser.name + " (You)")
+    let defaultOption = currentUser.name + " (You)"
     const dayData = getDayData(dogHook, day)
-
-    useEffect(() => {
-      setDefaultOption(currentUser.name + " (You)")
-    }, [currentUser, dogHook])
 
     for (let member of dog.members) {
       if (member.name === currentUser.name) {
@@ -489,7 +424,7 @@ const SingleDogDashboard = ({ navigation, route }: Props) => {
 
     let previousDayType = dayData.dayType
 
-    console.log("defaultOption: " + defaultOption)
+    console.log("nameDropdown.monday (Editable): " + nameDropdown.monday)
     console.log("memberNames: " + memberNames)
     // console.log("defaultOption in SDD: " + defaultOption)
     return memberNames.includes(defaultOption) && (

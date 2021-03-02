@@ -2,13 +2,17 @@ import React, { useState } from 'react';
 import DropDownPicker from 'react-native-dropdown-picker';
 
 type Props = {
+  refreshProp: boolean,
   options: string[],
   defaultOption: string,
   priority: number,
   onChange: (e: any) => void,
 }
 
-const Dropdown = ({ options, defaultOption, priority, onChange }: Props) => {
+const Dropdown = ({ refreshProp, options, defaultOption, priority, onChange }: Props) => {
+
+  // console.log("options: " + options)
+  console.log("defaultOption in Dropdown: " + defaultOption)
 
   type item = {
     label: string, value: string

@@ -26,7 +26,7 @@ const SingleDogDashboardBackground = ({ user, title, children }: Props) => {
       resizeMode="repeat"
       style={styles.background}
     >
-      <NavBar user={user} title={title} goBack={ () => navigation.navigate('DashboardTwo') } />
+      <NavBar user={user} title={title} goBack={ () => navigation.navigate('Dashboard') } />
       <KeyboardAvoidingView style={styles.container} behavior="padding">
       <ScrollView>
         {children}

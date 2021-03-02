@@ -1,50 +1,55 @@
-import { DogObject, UserMemberData, DogSchedule, WeeklyNeeds } from '../types'
+import { DogData, DogSchedule, WeeklyNeeds } from '../types'
+
 
 class Dog {
   firstName: string
   middleName: string
   lastName: string
-  members: Array<UserMemberData>
+  userIds: string[]
   schedule: DogSchedule
-  key: string
+  id: string
   weeklyNeeds: WeeklyNeeds
+  thisWeeksNeeds: WeeklyNeeds
 
     constructor (
       firstName: string,
       middleName: string,
       lastName: string,
-      members: Array<UserMemberData>,
+      usersIds: string[],
       schedule: DogSchedule,
-      key: string,
-      weeklyNeeds: WeeklyNeeds
+      id: string,
+      weeklyNeeds: WeeklyNeeds,
+      thisWeeksNeeds: WeeklyNeeds
     ) {
         this.firstName = firstName
         this.middleName = middleName
         this.lastName = lastName
-        this.members = members
+        this.userIds = usersIds
         this.schedule = schedule
-        this.key = key
+        this.id = id
         this.weeklyNeeds = weeklyNeeds
+        this.thisWeeksNeeds = thisWeeksNeeds
     }
     toString() {
-        return this.firstName + ', ' + this.middleName + ', ' + this.lastName + ', ' + this.key
+        return this.firstName + ', ' + this.middleName + ', ' + this.lastName + ', ' + this.id
     }
 }
 
 // Firestore data converter
 var dogConverter = {
-    toFirestore: function(dog: DogObject) {
+    toFirestore: function(dog: DogData) {
         return {
           firstName: dog.firstName,
           middleName: dog.middleName,
           lastName: dog.lastName,
-          members: dog.members,
+          userIds: dog.userIds,
           schedule: dog.schedule,
-          key: dog.key,
-          weeklyNeeds: dog.weeklyNeeds
+          id: dog.id,
+          weeklyNeeds: dog.weeklyNeeds,
+          thisWeeksNeeds: dog.thisWeeksNeeds
             }
     },
-    fromFirestore: function(snapshot, options){
+    fromFirestore: function(snapshot: any, options: any){
         const data = snapshot.data(options)
         let dog: any
         if (data.dog)
@@ -52,16 +57,15 @@ var dogConverter = {
         else
           dog = data
 
-        // console.log("data: " + JSON.stringify(data))
-        // console.log(dog.firstName + " " + dog.middleName + " " + dog.lastName + " " + dog.members + " " + dog.schedule+ " " + dog.key + " " + dog.weeklyNeeds)
         return new Dog(
           dog.firstName,
           dog.middleName,
           dog.lastName,
-          dog.members,
+          dog.userIds,
           dog.schedule,
-          dog.key,
+          dog.id,
           dog.weeklyNeeds,
+          dog.thisWeeksNeeds,
         )
     }
 }

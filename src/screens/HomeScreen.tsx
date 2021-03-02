@@ -22,7 +22,7 @@ const HomeScreen = ({}: Props) => {
     if (userId) {
       getUser(userId).then((user) => {
         if (user) {
-          navigation.navigate('DashboardTwo', {
+          navigation.navigate('Dashboard', {
             user: user,
           })
         }

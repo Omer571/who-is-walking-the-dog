@@ -1,49 +1,33 @@
 Give login functionality
 Make Loading Screen
 
-Current Task(s): 
+New Current Task(s):
+  -Change Type (COMPLETE)
+  -Change User and Dog Converter (COMPLETE)
+  -Make Rest API for User and Dog (COMPLETE)
+  -Filter functions from old helpers and corresponding components and screens
+    - Working on AddDogFormTwo and seem to finished AddDogFromTwoHelpers (TODO)
 
-  Get Completely rid of Old Dashboard and Change Name of DashboardTwo to Dashboard Everywhere
+  -dog userIds are bogus, if dog doesn't have first name (sign of example) then plan for it (EXAMPLE DOG CASE )
 
+Old Current Task(s):
+    TODO Delete all current notifications (COMPLETE)
+    TODO Have button to send out push notification to family to walk dog
+    TODO Have Calendar Reset on Sunday 10pm, and send out push notification with it (make button)
+      - When name updated, it isn't updated for dogs, this is a problem
+      - Need to follow the process for phone number and email as well
 
-  TODO TODO
-    Just make a very simple daily reminder (make sure it runs ONCE)
-    delete token on exit, and reinstate on login
-    Then give the option to notifications on and off in settings
+      - Problem: Old name showing up in SDD
+      - Problem: Needs to have weeklyNeeds and thisWeeksNeeds in collection
+        - Currently I'm not fixing this, I will reset the week to default numbers
 
-  TODO Make dog hook instead of local dog and user
-  (or call dog local dog)
-  (this may take some time - decide if this is what you want to do while refactoring)
+      -Progress: Took out dog and made just DogHook, made defaultOpton hook and currently working on EditableInput
 
-  TODO Have User Stayed Logged In First
-  TODO Need to delete user.push_token on logout (only one push token per device) (later, for right now we are using this to test functionality)
-
-
-    TODO WEEK NEEDS TO RESET SUNDAY NIGHT (and that's when weekly notification sent out (8:00 Sunday night (already done)))
-    So in Dashboard, have a use effect function called if (time == 8 pm on sunday) resetWeek() -> clears dog.schedule in DB and local dog
-    (currently testing background-fetch w/ expo but no results)
-
-    TODO Find a way to stop scheduling background task duplicates
-
-    TODO Send notification when day the day before that the next day is not taken yet
-    TODO If ginger not taken out, send sad message at night
-
-    How about once the day is registered for, that day's notification is canceled
-    So we would have 7 daily notifications (7 for today reminder, and 7 for tomorrow, possibly 7 for sad notification)
-    Once that day is registered for, that notification is turned off (both reminders)
-
-    When Dog
-    When Reserve day clicked, notification cancelled
-    When unreserve clicked, notification on
-
-    Problem is, current code only works when notification is get for whole group
-    First lets test and make sure this it the case
-    Start with testing with nothing registered
-    Then test after someone else done
-
-    For some reason dogs is an empty {} rather than an array of dogObjects in Dashboards?
-    Problem is dogs isn't updated by the time it tries to render dog cards. I used loadingHooks
-    to try to make the process work but it still fails. Reconsider complex push Notifications
+    TODO On logout delete user token
+    TODO Clean Up SingleDogDashboard
+    TODO Clean up pages, do documentation
+    TODO Post on github
+    TODO Look about how to host app or display
 
 
 Current Things to Keep in Mind/Problem(s) too fix in future:
@@ -59,6 +43,8 @@ Current Things to Keep in Mind/Problem(s) too fix in future:
 
 
   Completed Tasks (from January 5th):
+
+    Get Completely rid of Old Dashboard and Change Name of DashboardTwo to Dashboard Everywhere
 
     SaveLogIn state (Complete)
 
@@ -269,3 +255,39 @@ Future Tasks:
   put all types in types.tsx and use imports
   Make Error messages in Seperate file
   Currently, inAddDogForm, when multiple number errors, all alerts will get shown rather than one
+
+
+  Old Notification Notes:
+    Make dog hook instead of local dog and user
+    (or call dog local dog)
+    (this may take some time - decide if this is what you want to do while refactoring)
+
+    Have User Stayed Logged In First
+    Need to delete user.push_token on logout (only one push token per device) (later, for right now we are using this to test functionality)
+
+
+    WEEK NEEDS TO RESET SUNDAY NIGHT (and that's when weekly notification sent out (8:00 Sunday night (already done)))
+    So in Dashboard, have a use effect function called if (time == 8 pm on sunday) resetWeek() -> clears dog.schedule in DB and local dog
+    (currently testing background-fetch w/ expo but no results)
+
+    Find a way to stop scheduling background task duplicates
+
+    Send notification when day the day before that the next day is not taken yet
+    If ginger not taken out, send sad message at night
+
+    How about once the day is registered for, that day's notification is canceled
+    So we would have 7 daily notifications (7 for today reminder, and 7 for tomorrow, possibly 7 for sad notification)
+    Once that day is registered for, that notification is turned off (both reminders)
+
+    When Dog
+    When Reserve day clicked, notification cancelled
+    When unreserve clicked, notification on
+
+    Problem is, current code only works when notification is get for whole group
+    First lets test and make sure this it the case
+    Start with testing with nothing registered
+    Then test after someone else done
+
+    For some reason dogs is an empty {} rather than an array of dogObjects in Dashboards?
+    Problem is dogs isn't updated by the time it tries to render dog cards. I used loadingHooks
+    to try to make the process work but it still fails. Reconsider complex push Notifications

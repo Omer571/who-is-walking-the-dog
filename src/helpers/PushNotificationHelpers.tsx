@@ -2,6 +2,11 @@ import * as Notifications from 'expo-notifications';
 import { DogObject, UserData } from '../types'
 
 export const sendPushNotification = (receiverToken: string ,title: string, message: string, dog: DogObject, user: UserData) => {
+  if (!receiverToken) {
+    console.log("User not running app or logged out no notification sent: " + user.name)
+    return
+  }
+
   fetch('https://exp.host/--/api/v2/push/send', {
     method: 'POST',
     headers: {
@@ -37,10 +42,10 @@ type NotificationAction = {
 
 export const makeInteractive = async (identifier: string, buttonTitle: string) => {
   let notificationActions = [] as NotificationAction[]
-  let notificationAction = {
-    identifier: identifier,
-    buttonTitle: buttonTitle,
-  }
+  // let notificationAction = {
+  //   identifier: identifier,
+  //   buttonTitle: buttonTitle,
+  // }
   return await Notifications.setNotificationCategoryAsync(identifier, notificationActions)
 }
 
@@ -74,10 +79,10 @@ const tomorrowReminderTrigger: DailyTriggerInput = {
   repeats: false,
 }
 
-const todayReminderTrigger: DailyTriggerInput = {
+const dailyReminderTrigger: DailyTriggerInput = {
   hour: 10,
   minute: 9,
-  repeats: false,
+  repeats: true,
 }
 
 const todayFinalReminderTrigger: DailyTriggerInput = {
@@ -98,14 +103,14 @@ export async function scheduleWeeklyPushNotification() {
   })
 }
 
-export async function scheduleTodayReminder(dogName: string) {
+export async function scheduleDailyReminder(dogName: string) {
   return await Notifications.scheduleNotificationAsync({
     content: {
       title: "Click me to be taken to scheduling page!",
       body: dogName + " wants to go out today! Make sure to have someone take her out",
       data: { data: 'No data for now' },
     },
-    trigger: todayReminderTrigger,
+    trigger: dailyReminderTrigger,
   })
 }
 
@@ -132,12 +137,23 @@ export async function scheduleTomorrowReminder(dogName: string) {
 }
 
 export async function cancelPushNotification(identifier: string) {
-  await Notifications.cancelScheduledNotificationAsync(identifier)
+  Notifications.cancelScheduledNotificationAsync(identifier).then(() => {
+    console.log("Push Notification Deleted")
+  }).catch((error) => {
+    console.log("Couldn't Delete Push Notification w/ indentifier: " + identifier)
+    console.error(error)
+  })
 }
 
 export async function cancelAllPushNotifications() {
-  await Notifications.cancelAllScheduledNotificationsAsync()
+  Notifications.cancelAllScheduledNotificationsAsync().then(() => {
+    console.log("All Push Notifications Deleted")
+  }).catch((error) => {
+    console.log("Couldn't Delete Push Notification")
+    console.error(error)
+  })
 }
+
 export async function registerForPushNotificationsAsync() {
   const { status: existingStatus } = await Notifications.getPermissionsAsync()
   let finalStatus = existingStatus
@@ -153,6 +169,8 @@ export async function registerForPushNotificationsAsync() {
 
 }
 
+
+// ALL FUNCTIONALITY THAT I DON'T WANT TO DELETE YET BECAUSE I MAY USE IT
 // function scheduleDailyReminders(dogs: DogObject[]) {
 //   cancelAllPushNotifications().then(() => {
 //     Notifications.getAllScheduledNotificationsAsync().then((notifications) => {
@@ -246,3 +264,35 @@ export async function registerForPushNotificationsAsync() {
 //   }
 //
 // }
+//
+// const TASK_NAME = "BACKGROUND_TASK"
+// const INTERVAL = 5
+//
+// // console.log("Unregistering all current tasks: " + TaskManager.unregisterAllTasksAsync())
+// TaskManager.defineTask(TASK_NAME, () => {
+//   try {
+//     // fetch data here...
+//     const receivedNewData = "Simulated fetch " + Math.random()
+//     console.log("My task ", receivedNewData)
+//     console.log("Attempting to re-register background task:", RegisterBackgroundTask())
+//     return receivedNewData
+//       ? BackgroundFetch.Result.NewData
+//       : BackgroundFetch.Result.NoData
+//   } catch (err) {
+//     return BackgroundFetch.Result.Failed
+//   }
+// })
+//
+// // behind the scenes and the default value is the smallest fetch interval supported by the system (10-15 minutes).
+// // aka this will run every 10-15 minutes test twice with app running and twice without (1 hour)
+// const RegisterBackgroundTask = async () => {
+//  try {
+//    await BackgroundFetch.registerTaskAsync(TASK_NAME)
+//    await BackgroundFetch.setMinimumIntervalAsync(INTERVAL)
+//    console.log("Task registered w/ Interval:" + INTERVAL)
+//  } catch (err) {
+//    console.log("Task Register failed:", err)
+//  }
+// }
+//
+// RegisterBackgroundTask()

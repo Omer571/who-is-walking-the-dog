@@ -2,58 +2,15 @@ import React, { useState, useEffect, memo } from 'react'
 import { Text, View, StyleSheet } from 'react-native'
 import UnderlinedHeader from '../components/UnderlinedHeader'
 import Button from '../components/Button'
-import DogCard from '../components/DogCard'
-import { Route, DogObject, UserData, Navigation, DayInfo } from '../types'
-import emptyDogObject from '../helpers/emptyDogObject'
+import { Route, DogObject, Navigation } from '../types'
+import { createDogCard, createDefaultDogCard, wait } from '../helpers/DashboardHelpers'
 import { firebase } from '../firebase/config'
 import dogConverter from '../helpers/dogConverter'
 import { useNavigation } from '@react-navigation/native'
 import * as Notifications from 'expo-notifications'
-import {
-  scheduleWeeklyPushNotification,
-  registerForPushNotificationsAsync,
-  scheduleTodayReminder,
-  sendPushNotification,
-  scheduleTomorrowReminder,
-  scheduleTodayFinalReminder,
-  cancelPushNotification,
-  cancelAllPushNotifications,
-} from '../helpers/PushNotificationHelpers'
- import * as TaskManager from 'expo-task-manager'
- import * as BackgroundFetch from 'expo-background-fetch'
-
-
- const TASK_NAME = "BACKGROUND_TASK"
- const INTERVAL = 5
-
- // console.log("Unregistering all current tasks: " + TaskManager.unregisterAllTasksAsync())
- TaskManager.defineTask(TASK_NAME, () => {
-   try {
-     // fetch data here...
-     const receivedNewData = "Simulated fetch " + Math.random()
-     console.log("My task ", receivedNewData)
-     console.log("Attempting to re-register background task:", RegisterBackgroundTask())
-     return receivedNewData
-       ? BackgroundFetch.Result.NewData
-       : BackgroundFetch.Result.NoData
-   } catch (err) {
-     return BackgroundFetch.Result.Failed
-   }
- })
-
-// behind the scenes and the default value is the smallest fetch interval supported by the system (10-15 minutes).
-// aka this will run every 10-15 minutes test twice with app running and twice without (1 hour)
-const RegisterBackgroundTask = async () => {
-  try {
-    await BackgroundFetch.registerTaskAsync(TASK_NAME)
-    await BackgroundFetch.setMinimumIntervalAsync(INTERVAL)
-    console.log("Task registered w/ Interval:" + INTERVAL)
-  } catch (err) {
-    console.log("Task Register failed:", err)
-  }
-}
-
-RegisterBackgroundTask()
+import { registerForPushNotificationsAsync, cancelAllPushNotifications } from '../helpers/PushNotificationHelpers'
+// import * as TaskManager from 'expo-task-manager'
+// import * as BackgroundFetch from 'expo-background-fetch'
 
 
 const MAX_CARDS = 10
@@ -67,29 +24,7 @@ Notifications.setNotificationHandler({
   }),
 })
 
-function getMemberNames(dog: DogObject) {
-  const memberNames = dog.members.map((member: any) => {
-    return member.name
-  })
 
-  return memberNames
-}
-function createDogCard(dog: DogObject, user: UserData) {
-  const theseMemberNames = getMemberNames(dog)
-  return <DogCard dog={dog} user={user} cardKey={dog.key} key={dog.key} dogName={dog.firstName} members={theseMemberNames} />;
-}
-
-function createDefaultDogCard(user: UserData) {
-  const defaultDog = emptyDogObject
-  const defaultDogCard = <DogCard dog={defaultDog} user={user} cardKey='1' key='1' dogName="Example" members={["mom", "dad"]} />
-  return defaultDogCard
-}
-
-const wait = (timeout: number) => {
-  return new Promise(resolve => {
-    setTimeout(resolve, timeout)
-  })
-}
 
 type Props = {
   route: Route,
@@ -100,11 +35,6 @@ type Props = {
 const DashboardContent = ({ route, refreshValue }: Props) => {
 
   const [loadingDogData, setLoadingDogData] = useState(false)
-  const [loadingDailyNotifications, setLoadingDailyNotifications] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [todayPushNotificationIdentifier, setTodayPushNotificationIdentifier] = useState<string>("")
-  const [tomorrowPushNotificationIdentifier, setTomorrowPushNotificationIdentifier] = useState<string>("")
-  const [todayFinalPushNotificationIdentifier, setTodayFinalPushNotificationIdentifier] = useState<string>("")
 
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
@@ -116,8 +46,6 @@ const DashboardContent = ({ route, refreshValue }: Props) => {
 
   const navigation = useNavigation()
   const { user } = route.params
-  // console.log("route.params in Dashboard: " + JSON.stringify(route.params))
-  // console.log("User in Dashboard: " + JSON.stringify(user))
   const [dogs, setDogs] = useState<DogObject[]>([])
 
   function updateUserToken(token: string) {
@@ -157,38 +85,6 @@ const DashboardContent = ({ route, refreshValue }: Props) => {
     }
   }
 
-  // Needs to be global helper
-  function getDayData(dog: DogObject, day: number) {
-    let dayData = {} as DayInfo
-    switch (day) {
-      case 2:
-        dayData = dog.schedule.monday
-        break
-      case 3:
-        dayData = dog.schedule.tuesday
-        break
-      case 4:
-        dayData = dog.schedule.wednesday
-        break
-      case 5:
-        dayData = dog.schedule.thursday
-        break
-      case 6:
-        dayData = dog.schedule.friday
-        break
-      case 7:
-        dayData = dog.schedule.saturday
-        break
-      case 1:
-        dayData = dog.schedule.sunday
-        break
-      default:
-        throw Error("getDayData: day passed was not a day of the week\ndayData.time ")
-    }
-    return dayData
-  }
-
-
   useEffect(() => {
     getDogData()
     registerForPushNotificationsAsync().then((token) => {
@@ -198,21 +94,13 @@ const DashboardContent = ({ route, refreshValue }: Props) => {
         throw "ERROR - Error updating user push_token"
     })
 
-    // scheduleDailyReminders(dogs)
-    dogs.forEach((dog) => scheduleTodayReminder(dog.firstName))
-    scheduleWeeklyPushNotification()
-    TaskManager.isTaskRegisteredAsync(TASK_NAME).then((status) => {
-      console.log("Is " + TASK_NAME + " registered: " + status)
-    })
-
-
     const subscription = Notifications.addNotificationResponseReceivedListener(response => {
       const data = response.notification.request.content.data
       const user = data.user
       let dog: any
 
       if (data.dog) {
-        dog = JSON.parse(JSON.stringify(data.dog)) // a trick to get type from unknown to any
+        dog = JSON.parse(JSON.stringify(data.dog)) // a trick to transform a type from unknown to any
       }
       if (user && dog) {
         navigation.navigate('SingleDogDashboard', {
@@ -243,7 +131,7 @@ const DashboardContent = ({ route, refreshValue }: Props) => {
     <View>
       <UnderlinedHeader>My Dogs</UnderlinedHeader>
       <View style={styles.cardView}>
-        {(!loadingDogData && !loadingDailyNotifications) ? (
+        {(!loadingDogData) ? (
           renderDogCards()
       ) : <Text>Loading Dogs</Text>}
 
@@ -284,8 +172,6 @@ const styles = StyleSheet.create({
     padding: 20,
     width: '100%',
     maxWidth: 340,
-    // alignSelf: 'center',
-    // justifyContent: 'center'
   },
 });
 

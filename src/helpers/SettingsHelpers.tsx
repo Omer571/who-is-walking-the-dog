@@ -1,7 +1,8 @@
 import { Alert } from 'react-native'
-import dogConverter from './dogConverter'
-import userConverter from './userConverter'
+import dogConverter from '../firebase/dogConverter'
+import userConverter from '../firebase/userConverter'
 import { firebase } from '../firebase/config'
+import { deleteUser, getUserAsync } from '../firebase/User'
 import { DogObject, UserData, UserMemberData, WeeklyNeeds } from '../types'
 import { getUsersFromCollection, fromCustomTypeToPureJSObject } from './AddDogFormTwoHelpers'
 
@@ -10,6 +11,18 @@ export const wait = (timeout: number) => {
     setTimeout(resolve, timeout)
   })
 }
+
+export function handleDeleteAccount(userId: string) {
+  deleteUser(userId).then(() => {
+    getAllDogsAsync().then((dogs) => {
+      dogs.map((dog) => {
+        // delete user from dog keys
+        updateDog(dog)
+      })
+    })
+  })
+}
+
 
 export function setDogWeeklyNeedsAsync(dog: DogObject, weeklyNeeds: WeeklyNeeds) {
   getUsersFromCollection().then(users => {
@@ -258,26 +271,76 @@ export const savePhoneNumberToUserCollection = (phoneNumber: string, user: UserD
   }
 }
 
+export const handleUserNameChange = (newName: string, user: UserData) => {
+    _saveNameToUserCollection(newName, user)
+    _getDogKeysFromUserData(user).then((currentUserDogKeys) => {
+      _saveNewNameToOtherUserDogs(newName, user, currentUserDogKeys)
+    })
+}
 
-export const saveNameToUserCollection = (name: string, user: UserData) => {
+const _getDogKeysFromUserData = async (user: UserData) => {
+  // Get Keys of all dogs have by current User
+  let currentUserDogKeys: string[] = []
+  let dogRef = firebase.firestore().collection("users").doc(user.id).collection("dogs").withConverter(dogConverter)
+  return dogRef.get().then((docs) => {
+    docs.forEach((doc) => {
+      let dog = doc.data()
+      currentUserDogKeys.push(dog.key)
+    })
+
+    return currentUserDogKeys
+  })
+}
+
+const _saveNewNameToOtherUserDogs = (name: string, user: UserData, currentUserDogKeys: string[]) => {
+  // Save name for all dogs which have user
+  // (this includes other user's dogs)
+  let currentUser = user
+  getUsersFromCollection().then((users) => {
+    for (let thisUser of users) {
+      for (let key of currentUserDogKeys) {
+        let thisUserDogRef = firebase.firestore().collection("users").doc(thisUser.id).collection("dogs").doc(key).withConverter(dogConverter)
+        thisUserDogRef.get().then(doc => {
+          if (doc.exists) {
+
+            // Change user's name for this dog
+            let dog = doc.data()
+            if (dog) {
+              for (let member of dog.members) {
+                if (member.id === currentUser.id) {
+                  member.name = name
+                }
+              }
+
+              // Update Dog to Collection
+              let specificDogRef = firebase.firestore().collection("users").doc(thisUser.id).collection("dogs").doc(key).withConverter(dogConverter)
+              specificDogRef.update({
+                members: dog.members
+              })
+            }
+          }
+        })
+
+      }
+    }
+  })
+}
+
+const _saveNameToUserCollection = (name: string, user: UserData) => {
   console.log("(saveNameToUserCollection) name: " + name)
+  // Save name for users
+  let userRef = firebase.firestore().collection("users").doc(user.id)
+    userRef.update({
+      name: name,
+    })
+    .then(() => {
+      alert("Your New Name has been succesfully saved to: " + name)
+    })
+    .catch((error) => {
+      alert("(SettingsHelpers - saveNameToUserCollection) Error updating user's Name in Firestore: " + error)
+      console.error("(SettingsHelpers - saveNameToUserCollection) Error updating user's Name in Firestore: ", error)
+    })
 
-  if (user) {
-    let userRef = firebase.firestore().collection("users").doc(user.id)
-      userRef.update({
-        name: name,
-      })
-      .then(() => {
-        alert("Your New Name has been succesfully saved to: " + name)
-      })
-      .catch((error) => {
-        alert("(SettingsHelpers - saveNameToUserCollection) Error updating user's Name in Firestore: " + error)
-        console.error("(SettingsHelpers - saveNameToUserCollection) Error updating user's Name in Firestore: ", error)
-      })
-  }
-  else {
-    console.log("(SettingsHelpers - saveNameToUserCollection) Error: user is null")
-  }
 }
 
 export const reauthenticateUser = async (userFromAuth: firebase.User, password: string) => {
@@ -303,29 +366,6 @@ export const reauthenticateUser = async (userFromAuth: firebase.User, password: 
 }
 
 
-export const deleteAccountFromUserCollection = (userFromAuth: firebase.User, user: UserData) => {
-  if (userFromAuth) {
-    userFromAuth.delete().then(function() {
-      if (user) {
-        let userRef = firebase.firestore().collection("users").doc(user.id)
-        userRef.delete().then(() => {
-          console.log("User successfully deleted from Firestore!")
-          alert("You have been deleted from our registery: " + user.name + "\nid: " + user.id)
-        }).catch((error) => {
-          console.error("(SettingsHelpers - deleteAccountFromUserCollection) Error removing user from Firestore: ", error)
-        })
-      }
-
-    }).catch(function(error) {
-      alert("(SettingsHelpers - deleteAccountFromUserCollection) Error deleting user from Auth: " + error)
-      console.error("(SettingsHelpers - deleteAccountFromUserCollection) Error deleting user from Auth: ", error)
-    })
-
-  } else {
-    console.log("(SettingsHelpers - deleteAccountFromUserCollection) Can't delete when userFromAuth undefined")
-  }
-
-}
 
 
 export function getDogWithKeyFromArray(key: string, dogs: DogObject[]) {

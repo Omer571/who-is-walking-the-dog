@@ -13,7 +13,7 @@ import {
   LoginScreen,
   RegisterScreen,
   ForgotPasswordScreen,
-  DashboardTwo,
+  Dashboard,
   SingleDogDashboard,
   AddDogScreen,
   SettingsScreen,
@@ -51,7 +51,7 @@ function App() {
               userDataObject.push_token = ""
 
               setUser(userDataObject)
-              setInitialRouteName("DashboardTwo")
+              setInitialRouteName("Dashboard")
             } else {
               setUser(undefined)
               setInitialRouteName("HomeScreen")
@@ -69,7 +69,7 @@ function App() {
     <NavigationContainer>
       <Stack.Navigator initialRouteName={initialRouteName}>
         <Stack.Screen name="HomeScreen" component={HomeScreen} />
-        <Stack.Screen name="DashboardTwo" component={DashboardTwo} initialParams={{ user: user }}/>
+        <Stack.Screen name="Dashboard" component={Dashboard} initialParams={{ user: user }}/>
         <Stack.Screen name="LoginScreen" component={LoginScreen} />
         <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
         <Stack.Screen name="ForgetPasswordScreen" component={ForgotPasswordScreen} />

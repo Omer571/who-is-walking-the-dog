@@ -83,7 +83,7 @@ const IndividualDogSettingScreen: FunctionComponent<Props> = ({ route, navigatio
   const handleLeaveDogFamily = () => {
     removeDogFromUser(dogHook, userHook)
     removeMemberFromDogFamily(dogHook, userHook)
-    navigation.navigate("DashboardTwo")
+    navigation.navigate("Dashboard")
   }
 
   const handleAddFamilyMember = (member: DogFamilyMember) => {
@@ -119,7 +119,7 @@ const IndividualDogSettingScreen: FunctionComponent<Props> = ({ route, navigatio
       familyMember.push_token = userToAdd.push_token
 
       // Save new family member to dog (both local dog and collection updated)
-      saveNewFamilyMemberToDogAsync(dog, familyMember, allAppUsers).then(() => navigation.navigate("DashboardTwo"))
+      saveNewFamilyMemberToDogAsync(dog, familyMember, allAppUsers).then(() => navigation.navigate("Dashboard"))
 
       addExistingDogToUserCollectionAsync(userToAdd, dog)
     })
